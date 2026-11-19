@@ -616,7 +616,7 @@ class Game {
     if (o.hp <= 0) {
       const n = 1 + this.hn("dig3") + randint(0, 1), got = this.addItem(name, price*uniform(0.9, 1.2), "", "", n);
       this.inc("ores", got); this.gainXp(3*got*(tier+1)); this.note(`+${got} ${name}`, col); this.floatText(x, y-20, `+${got} ${name}`, RCOL[rar]);
-      o.respawn = 60; o.hp = hp; this.rareFx(name, ridx(rar), x, y);
+      o.respawn = 60; o.hp = hp; this.blocked.delete(key(o.x, o.y)); this.rareFx(name, ridx(rar), x, y);
     }
   }
   finishDig(tx, ty, dive) {
@@ -955,7 +955,8 @@ class Game {
     for (const t of this.trees) if (t.stump > 0) { t.stump -= dt; if (t.stump <= 0) {
       if (dist(this.px, this.py, t.x*TS+16, t.y*TS+16) < 34) { t.stump = 1; continue; } // wait until the player steps off
       t.t = choices([...TREES.keys()], TREES.map(x => x[5])); t.hp = TREES[t.t][2]; this.blocked.add(key(t.x, t.y)); } }
-    for (const o of this.ores) if (o.respawn > 0) o.respawn -= dt;
+    for (const o of this.ores) if (o.respawn > 0) { o.respawn -= dt; if (o.respawn <= 0) { // rubble has no hitbox; rock returns once you step off
+      if (dist(this.px, this.py, o.x*TS+16, o.y*TS+16) < 34) o.respawn = 1; else this.blocked.add(key(o.x, o.y)); } }
     for (const [h, v] of this.holes) { if (v - dt <= 0) this.holes.delete(h); else this.holes.set(h, v - dt); }
     while (this.sparkles.size < 12) { const [x, y] = choice(this.grassTiles); this.sparkles.add(key(x, y)); }
     for (const c of [...this.campfires]) { c[2] -= dt; if (c[2] <= 0) this.removeStack(this.campfires, c); }

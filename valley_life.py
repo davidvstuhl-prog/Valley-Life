@@ -1262,6 +1262,7 @@ class Game:
             self.float_text(x, y - 20, f"+{got} {name}", RCOL[rar])
             o["respawn"] = 60
             o["hp"] = hp
+            self.blocked.discard((o["x"], o["y"]))  # broken rubble has no hitbox
             self.rare_fx(name, ridx(rar), x, y)
 
     def finish_dig(self, tx, ty, dive):
@@ -2049,6 +2050,11 @@ class Game:
         for o in self.ores:
             if o["respawn"] > 0:
                 o["respawn"] -= dt
+                if o["respawn"] <= 0:
+                    if dist(self.px, self.py, o["x"] * TS + 16, o["y"] * TS + 16) < 34:
+                        o["respawn"] = 1.0  # wait until the player steps off
+                    else:
+                        self.blocked.add((o["x"], o["y"]))
         for h in list(self.holes):
             self.holes[h] -= dt
             if self.holes[h] <= 0:
