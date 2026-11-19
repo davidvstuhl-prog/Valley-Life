@@ -3,16 +3,22 @@
 A playable Python/pygame prototype of a "do everything in one valley" survival + collecting game,
 built to show that a game mixing fishing, farming, digging, mining, hunting, cooking and pets is doable.
 
-## Run it
+## Play it
 
-```bash
-pip install pygame
-python valley_life.py
-```
+- **Windows:** open the **Actions** tab, click the newest "Build Valley Life .exe" run, and download
+  **ValleyLife-Windows** under *Artifacts*. Unzip it and double-click `ValleyLife.exe`
+  (if Windows shows "Windows protected your PC", click *More info* → *Run anyway*).
+- **Browser:** double-click `valley_life_web.html`. It works with keyboard + mouse or a touchscreen.
+- **Python:**
 
-Everything is in a single file (`valley_life.py`). The map is generated the same way every time, and
-your progress saves to `valley_save.json` (autosave every minute and on quit). Delete that file, or
-click **New game** on the title screen, to start over.
+  ```bash
+  pip install pygame
+  python valley_life.py
+  ```
+
+The map is the same every time, and your progress saves to `valley_save.json` next to the game
+(autosave every minute and on quit). Delete that file, or click **New game** on the title screen, to start over.
+Every push to this repo rebuilds the Windows `.exe` automatically.
 
 ## Controls
 
