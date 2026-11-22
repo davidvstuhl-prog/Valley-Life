@@ -293,6 +293,8 @@ BUILDINGS = [("HOME", "home", 60, 43, 5, 4, (180, 90, 70)), ("SHOP", "shop", 66,
              ("PET HATCHERY", "pets", 62, 56, 5, 4, (240, 140, 190)), ("KITCHEN", "cook", 76, 56, 6, 4, (200, 80, 60)),
              ("GEM STORE", "gems", 85, 56, 5, 4, (60, 200, 220))]
 TABLES = [(74, 62), (77, 62), (80, 62), (83, 62)]
+DINER_PATIENCE = 240.0
+HOLE_TIME = 20.0
 
 # ------------------------------------------------------------------ item database
 ITEMS = {}
@@ -304,7 +306,7 @@ def reg(name, cat, base, rarity="Common", color=(200, 200, 200), tags=(), hunger
 
 
 for _f in FISH:
-    reg(_f[0], "fish", _f[2], _f[1], _f[7], tags=("junk",) if _f[0] in ("Old Boot", "Seaweed") else ("fish",))
+    reg(_f[0], "fish", _f[2], _f[1], _f[7], tags=("junk",) if _f[0] in ("Old Boot", "Seaweed") else ("fish", "fillet"))
 reg("Fish Fillet", "fish", 8, "Common", (250, 170, 150), tags=("fillet",))
 reg("Fish Scales", "fish", 4, "Common", (170, 220, 230))
 for _t in TREES:
@@ -328,6 +330,18 @@ for _r in RECIPES:
 reg("Bandage", "misc", 10, "Common", (240, 240, 240), heal=40)
 reg("Water Bottle", "misc", 5, "Common", (120, 190, 255), thirst=50)
 reg("Snack Bar", "misc", 8, "Common", (200, 150, 90), hunger=30)
+
+
+def matches(s, spec):
+    """Does this bag stack count as ingredient `spec`? Rare (Epic+) or mutated fish are never cooked automatically."""
+    it = ITEMS[s["name"]]
+    if spec not in it["tags"]:
+        return False
+    return not (spec == "fillet" and "fish" in it["tags"] and (ridx(it["rarity"]) >= 3 or s["mut"]))
+
+
+def ing_label(spec):
+    return "fish" if spec == "fillet" else spec
 
 
 def make_noise(w, h, scale, seed):
@@ -384,6 +398,7 @@ class Game:
                                  [(q[0], q[1], q[2]) for q in PETS], RAR)
         self._scaled = {}
         self.sell_dlg = None
+        self.waypoint = None
         self.title = True
         self.menu = None
         self.tab = 0
@@ -582,7 +597,7 @@ class Game:
     def take(self, spec, n, lst=None, dry=False):
         """Remove n units matching a tag/name (cheapest first). Returns total value or None."""
         lst = self.bag if lst is None else lst
-        stacks = sorted([s for s in lst if spec in ITEMS[s["name"]]["tags"]], key=lambda s: s["value"])
+        stacks = sorted([s for s in lst if matches(s, spec)], key=lambda s: s["value"])
         if sum(s["count"] for s in stacks) < n:
             return None
         if dry:
@@ -600,7 +615,7 @@ class Game:
         return val
 
     def have(self, spec):
-        return sum(s["count"] for s in self.bag if spec in ITEMS[s["name"]]["tags"])
+        return sum(s["count"] for s in self.bag if matches(s, spec))
 
     @staticmethod
     def iname(s):
@@ -1284,7 +1299,7 @@ class Game:
         mut, mm = self.roll_mut(0.03 * (1 + luck * 0.3))
         got = self.add_item(name, value * mm * random.uniform(0.9, 1.2), mut=mut)
         if not dive:
-            self.holes[(tx, ty)] = 90.0
+            self.holes[(tx, ty)] = HOLE_TIME
         if got:
             self.inc("digs")
             self.gain_xp(3 * (ri + 1))
@@ -1553,10 +1568,17 @@ class Game:
         if self.diner_t <= 0 and free:
             self.diner_t = random.uniform(18, 30) / (2 if self.has("cook2") else 1)
             owned = [s["name"] for s in self.bag if ITEMS[s["name"]]["cat"] == "food"]
-            dish = random.choice(owned) if owned and random.random() < 0.6 else random.choice(RECIPES)[0]
+            cookable = [r[0] for r in RECIPES if self.plan(r)]
+            roll = random.random()
+            if owned and roll < 0.7:
+                dish = random.choice(owned)
+            elif cookable and roll < 0.95:
+                dish = random.choice(cookable)
+            else:
+                dish = random.choice(["Grilled Fish", "Roast Meat", "Veggie Stew"])
             s = random.choice(free)
             tx, ty = TABLES[s]
-            self.diners.append(dict(seat=s, dish=dish, x=tx * TS + 16, y=ty * TS + 46, patience=150.0, pal=random.randrange(4)))
+            self.diners.append(dict(seat=s, dish=dish, x=tx * TS + 16, y=ty * TS + 46, patience=DINER_PATIENCE, pal=random.randrange(4)))
         for d in list(self.diners):
             d["patience"] -= dt
             if d["patience"] <= 0:
@@ -1583,6 +1605,20 @@ class Game:
         self.float_text(d["x"], d["y"] - 64, "5 STARS! *****", GOLD, 22)
         self.burst(d["x"], d["y"], GOLD, 14, 120)
 
+    def can_serve(self, d):
+        return any(s["name"] == d["dish"] for s in self.bag)
+
+    def serve_all(self):
+        n = 0
+        for d in list(self.diners):
+            if self.can_serve(d):
+                self.serve(d)
+                n += 1
+        if n:
+            self.note(f"Served {n} diner{'s' if n > 1 else ''}!", GOLD)
+        else:
+            self.note("You don't have any of the dishes they ordered yet. Cook them first!", ORANGE)
+
     # ------------------------------------------------------------ cooking
     def plan(self, recipe):
         """Return True if the bag holds every ingredient (name-specific ones reserved first)."""
@@ -1590,7 +1626,7 @@ class Game:
         specs = sorted(recipe[1], key=lambda sp: sp[0] in GENERIC)
         for spec, n in specs:
             for s in sorted(self.bag, key=lambda s: s["value"]):
-                if spec in ITEMS[s["name"]]["tags"] and counts[id(s)] > 0:
+                if matches(s, spec) and counts[id(s)] > 0:
                     k = min(n, counts[id(s)])
                     counts[id(s)] -= k
                     n -= k
@@ -1599,6 +1635,26 @@ class Game:
             if n > 0:
                 return False
         return True
+
+    def food_value(self, r, val, q):
+        return (val * 1.3 + 15 + r[5] * 0.5) * QMULT[q] * (1.25 if self.has("cook1") else 1) * (2 if self.has("cook4") else 1)
+
+    def quick_cook(self, r, n=1):
+        """Cook without the minigame (always Good quality)."""
+        made, total = 0, 0.0
+        for _ in range(n):
+            if not self.plan(r):
+                break
+            val = sum(self.take(spec, k) or 0 for spec, k in sorted(r[1], key=lambda sp: sp[0] in GENERIC))
+            v = self.food_value(r, val, "Good")
+            self.add_item(r[0], v, q="Good")
+            made += 1
+            total += v
+        if made:
+            self.inc("cooked", made)
+            self.gain_xp(6 * made)
+            self.note(f"Cooked {made}x {r[0]}! Worth {fmt(total)}c", GREEN)
+            self.burst(self.px, self.py, (255, 190, 90), 12, 120)
 
     def start_cook(self, recipe):
         if not self.plan(recipe):
@@ -1615,7 +1671,7 @@ class Game:
         if c["t"] > 7:
             q = "Burnt"
         r = c["r"]
-        value = (c["val"] * 1.3 + 15 + r[5] * 0.5) * QMULT[q] * (1.25 if self.has("cook1") else 1) * (2 if self.has("cook4") else 1)
+        value = self.food_value(r, c["val"], q)
         self.add_item(r[0], value, q=q)
         self.inc("cooked")
         self.gain_xp(8)
@@ -2117,6 +2173,8 @@ class Game:
             pp[1] += (ty - pp[1]) * min(1, dt * 4)
         if not busy:
             self.check_quest()
+        if self.waypoint and dist(self.px, self.py, *self.poi["cook"]) < 90:
+            self.waypoint = None
         self.save_t += dt
         if self.save_t > 60:
             self.save_t = 0
@@ -2157,9 +2215,10 @@ class Game:
                 pygame.draw.ellipse(sc, (25, 70, 130), (sx - 9, sy - 4, 18, 8))
         for (tx, ty), tl in self.holes.items():
             if self.on_screen(tx * TS, ty * TS):
-                sx, sy = self.w2s(tx * TS, ty * TS)
-                pygame.draw.ellipse(sc, (70, 45, 30), (sx + 4, sy + 8, 24, 16))
-                pygame.draw.ellipse(sc, (40, 25, 15), (sx + 8, sy + 11, 16, 10))
+                sx, sy = self.w2s(tx * TS + 16, ty * TS + 16)
+                k = min(1.0, tl / 4)   # shrinks away in its last 4 seconds
+                pygame.draw.ellipse(sc, (70, 45, 30), (sx - 12 * k, sy - 8 * k, 24 * k, 16 * k))
+                pygame.draw.ellipse(sc, (40, 25, 15), (sx - 8 * k, sy - 5 * k, 16 * k, 10 * k))
         for (tx, ty) in self.sparkles:
             if self.on_screen(tx * TS, ty * TS):
                 sx, sy = self.w2s(tx * TS + 16, ty * TS + 16)
@@ -2396,7 +2455,7 @@ class Game:
         self.blit_spr(f"p_diner{d['pal']}_up_0", sx, sy)
         self.bubble(sx, sy - 60, ["Order:", d["dish"]])
         self.icon(d["dish"], sx + 44, sy - 76, 26)
-        frac = d["patience"] / 150
+        frac = d["patience"] / DINER_PATIENCE
         self.hp_bar(sx, sy + 6, frac, GREEN if frac > 0.4 else RED, 40)
 
     def draw_pet(self, sx, sy, name, scale=1.0):
@@ -2576,6 +2635,12 @@ class Game:
         if self.vip:
             self.text("VIP  +50% coins", (W - 16, yy), 20, GOLD, "tr")
             yy += 22
+        if self.restaurant:
+            n = len(self.diners)
+            lab = (f"RESTAURANT: {n} waiting" if n else "RESTAURANT: no diners") + ("  (arrow on)" if self.waypoint else "")
+            self.button((W - 296, yy + 4, 280, 30), lab, lambda: setattr(self, "waypoint", None if self.waypoint else "cook"),
+                        ORANGE if n else PANEL3, size=19)
+            yy += 40
         if not self.starter_bought and self.starter_left > 0:
             sl = int(self.starter_left)
             self.button((W - 236, yy + 4, 220, 32), f"STARTER PACK -90%  {sl // 60}:{sl % 60:02d}",
@@ -2615,7 +2680,9 @@ class Game:
         sc.blit(self.mini, (mx, my))
         pygame.draw.circle(sc, WHITE, (mx + int(self.px / TS * 1.5), my + int(self.py / TS * 1.5)), 4)
         pygame.draw.circle(sc, RED, (mx + int(self.px / TS * 1.5), my + int(self.py / TS * 1.5)), 3)
-        tg = self.quest_target()
+        tg = self.poi["cook"] if self.waypoint else self.quest_target()
+        for d in self.diners:
+            pygame.draw.circle(sc, ORANGE, (mx + int(d["x"] / TS * 1.5), my + int(d["y"] / TS * 1.5)), 3)
         if tg:
             pygame.draw.circle(sc, GOLD, (mx + int(tg[0] / TS * 1.5), my + int(tg[1] / TS * 1.5)), 4, 2)
             d = dist(tg[0], tg[1], self.px, self.py)
@@ -3055,41 +3122,51 @@ class Game:
 
     def menu_cook(self):
         x, y, w, h = self.panel("KITCHEN")
-        self.text("Click COOK, then press SPACE when the marker is in the middle!", (x + 24, y + 66), 22, (200, 220, 255))
-        for i, rcp in enumerate(RECIPES):
-            r = pygame.Rect(x + 20, y + 100 + i * 58, 620, 52)
+        self.text("QUICK = cook 1 now    MAX = cook all you can    COOK = minigame for Perfect & Gourmet food",
+                  (x + 24, y + 66), 20, (200, 220, 255))
+        for i, rcp in enumerate(sorted(RECIPES, key=lambda r: not self.plan(r))):
+            r = pygame.Rect(x + 20, y + 94 + i * 58, 640, 52)
             ok = self.plan(rcp)
             pygame.draw.rect(self.screen, PANEL2 if ok else (40, 42, 54), r, border_radius=10)
-            pygame.draw.circle(self.screen, rcp[6], (r.x + 24, r.centery), 13)
-            self.text(rcp[0], (r.x + 48, r.y + 6), 24, WHITE if ok else GREY)
-            ings = []
+            self.icon(rcp[0], r.x + 26, r.centery, 38)
+            self.text(rcp[0], (r.x + 52, r.y + 5), 24, WHITE if ok else GREY)
+            cx_ = r.x + 52
             for spec, n in rcp[1]:
                 have = self.have(spec)
-                ings.append((f"{n}x {spec if spec not in GENERIC else 'any ' + spec} ({have})", GREEN if have >= n else RED))
-            cx_ = r.x + 48
-            for t, c in ings:
-                rr = self.text(t, (cx_, r.y + 30), 17, c)
-                cx_ = rr.right + 12
-            self.button((r.right - 110, r.y + 8, 96, 36), "COOK", lambda rc=rcp: self.start_cook(rc), ORANGE, ok, 22)
-        rx = x + 660
-        nfish = self.have("fish")
-        pygame.draw.rect(self.screen, PANEL2, (rx, y + 100, w - 680, 150), border_radius=12)
-        self.text("SCALE & FILLET", (rx + 16, y + 110), 28, (250, 170, 150))
-        self.text("Turn raw fish into Fish Fillets", (rx + 16, y + 142), 20, (210, 210, 230))
-        self.text("(+ Fish Scales). Rare fish = more!", (rx + 16, y + 162), 20, (210, 210, 230))
-        self.button((rx + 16, y + 192, w - 712, 44), f"SCALE {nfish} FISH", self.scale_fish, (220, 120, 100), nfish > 0, 24)
-        pygame.draw.rect(self.screen, PANEL2, (rx, y + 270, w - 680, 300), border_radius=12)
-        self.text("RESTAURANT", (rx + 16, y + 280), 28, GOLD)
+                cx_ = self.text(f"{n} {ing_label(spec)} ({have})", (cx_, r.y + 30), 17, GREEN if have >= n else RED).right + 10
+            self.button((r.right - 246, r.y + 8, 82, 36), "COOK", lambda rc=rcp: self.start_cook(rc), ORANGE, ok, 21)
+            self.button((r.right - 158, r.y + 8, 80, 36), "QUICK", lambda rc=rcp: self.quick_cook(rc, 1), GREEN, ok, 21)
+            self.button((r.right - 72, r.y + 8, 62, 36), "MAX", lambda rc=rcp: self.quick_cook(rc, 99), (60, 170, 190), ok, 21)
+        rx, rw = x + 680, w - 700
+        pygame.draw.rect(self.screen, PANEL2, (rx, y + 94, rw, 384), border_radius=12)
+        self.text("RESTAURANT", (rx + 16, y + 104), 28, GOLD)
         if not self.restaurant:
-            for i, l in enumerate(["Open tables outside the kitchen.", "Diners order dishes and pay", "1.5x value + TIPS!"]):
-                self.text(l, (rx + 16, y + 314 + i * 22), 20, (210, 210, 230))
-            self.button((rx + 16, y + 400, w - 712, 50), "OPEN IT! (400 coins)", self.open_restaurant, GREEN, size=24)
+            for i, l in enumerate(["Tables outside the kitchen.", "Diners order food and pay", "1.5x its value + TIPS!",
+                                   "Serve them right here."]):
+                self.text(l, (rx + 16, y + 142 + i * 24), 21, (210, 210, 230))
+            self.button((rx + 16, y + 250, rw - 32, 50), "OPEN IT! (400 coins)", self.open_restaurant, GREEN, size=24)
         else:
-            self.text(f"OPEN!  Diners waiting: {len(self.diners)}", (rx + 16, y + 314), 22, GREEN)
+            self.text(f"OPEN!  {len(self.diners)}/4 tables full", (rx + 16, y + 136), 21, GREEN)
+            if not self.diners:
+                self.text("Waiting for diners to arrive...", (rx + 16, y + 180), 20, GREY)
             for i, d in enumerate(self.diners):
-                have = any(s["name"] == d["dish"] for s in self.bag)
-                self.text(f"Table {d['seat'] + 1}: {d['dish']}", (rx + 16, y + 344 + i * 26), 20, GREEN if have else WHITE)
-            self.text("Walk to a diner and press E to serve.", (rx + 16, y + 540), 18, GREY)
+                ry = y + 166 + i * 62
+                pygame.draw.rect(self.screen, PANEL, (rx + 10, ry, rw - 20, 56), border_radius=8)
+                self.icon(d["dish"], rx + 34, ry + 28, 36)
+                self.text(d["dish"], (rx + 58, ry + 6), 21)
+                self.text(f"Table {d['seat'] + 1}", (rx + 58, ry + 30), 17, GREY)
+                frac = d["patience"] / DINER_PATIENCE
+                pygame.draw.rect(self.screen, (20, 20, 24), (rx + 150, ry + 36, 90, 6), border_radius=3)
+                pygame.draw.rect(self.screen, GREEN if frac > 0.4 else RED, (rx + 150, ry + 36, int(90 * frac), 6), border_radius=3)
+                self.button((rx + rw - 106, ry + 10, 86, 36), "SERVE", lambda d=d: self.serve(d), GREEN, self.can_serve(d), 21)
+            self.button((rx + 16, y + 422, rw - 32, 44), "SERVE ALL I CAN", self.serve_all, GOLD,
+                        any(self.can_serve(d) for d in self.diners), 22, BLACK)
+        nf = sum(s["count"] for s in self.bag if "fish" in ITEMS[s["name"]]["tags"])
+        pygame.draw.rect(self.screen, PANEL2, (rx, y + 490, rw, 136), border_radius=12)
+        self.text("SCALE & FILLET  (optional)", (rx + 16, y + 500), 22, (250, 170, 150))
+        self.text("Raw fish already work in recipes.", (rx + 16, y + 528), 18, (210, 210, 230))
+        self.text("Epic+ and mutated fish are never cooked.", (rx + 16, y + 548), 18, (210, 210, 230))
+        self.button((rx + 16, y + 574, rw - 32, 40), f"SCALE {nf} FISH", self.scale_fish, (220, 120, 100), nf > 0, 21)
 
     def open_restaurant(self):
         if self.coins < 400:

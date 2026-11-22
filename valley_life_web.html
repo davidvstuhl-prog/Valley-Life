@@ -212,12 +212,16 @@ const TOUCH_QUEST = {0:"Catch a fish! Stand by water, HOLD the FISH button, let 
 const BUILDINGS = [["HOME","home",60,43,5,4,[180,90,70]],["SHOP","shop",66,43,5,4,[70,130,200]],["MARKET","market",76,43,5,4,[220,170,60]],
   ["UPGRADES","skills",82,43,5,4,[130,90,200]],["PET HATCHERY","pets",62,56,5,4,[240,140,190]],["KITCHEN","cook",76,56,6,4,[200,80,60]],["GEM STORE","gems",85,56,5,4,[60,200,220]]];
 const TABLES = [[74,62],[77,62],[80,62],[83,62]];
+const DINER_PATIENCE = 240, HOLE_TIME = 20;
+// Does this bag stack count as ingredient `spec`? Rare (Epic+) or mutated fish are never cooked automatically.
+function matches(s, spec) { const it = ITEMS[s.name]; if (!it.tags.has(spec)) return false; return !(spec === "fillet" && it.tags.has("fish") && (ridx(it.rarity) >= 3 || s.mut)); }
+const ingLabel = spec => spec === "fillet" ? "fish" : spec;
 
 const ITEMS = {};
 function reg(name, cat, base, rarity="Common", color=[200,200,200], tags=[], hunger=0, thirst=0, heal=0) {
   ITEMS[name] = {cat, base, rarity, color, tags: new Set([...tags, name]), hunger, thirst, heal};
 }
-for (const f of FISH) reg(f[0], "fish", f[2], f[1], f[7], (f[0] === "Old Boot" || f[0] === "Seaweed") ? ["junk"] : ["fish"]);
+for (const f of FISH) reg(f[0], "fish", f[2], f[1], f[7], (f[0] === "Old Boot" || f[0] === "Seaweed") ? ["junk"] : ["fish", "fillet"]);
 reg("Fish Fillet","fish",8,"Common",[250,170,150],["fillet"]); reg("Fish Scales","fish",4,"Common",[170,220,230]);
 for (const t of TREES) reg(t[0]+" Log","wood",t[1],t[4],LOG_BARK[t[0]],["wood"]);
 for (const o of ORES) reg(o[0],"ore",o[2],o[5],o[4]);
@@ -343,13 +347,13 @@ class Game {
   }
   take(spec, n, lst=null) {
     lst = lst || this.bag;
-    const stacks = lst.filter(s => ITEMS[s.name].tags.has(spec)).sort((a, b) => a.value - b.value);
+    const stacks = lst.filter(s => matches(s, spec)).sort((a, b) => a.value - b.value);
     if (stacks.reduce((a, s) => a + s.count, 0) < n) return null;
     let val = 0, left = n;
     for (const s of stacks) { const k = Math.min(left, s.count); s.count -= k; val += k*s.value; left -= k; if (s.count <= 0) lst.splice(lst.indexOf(s), 1); if (!left) break; }
     return val;
   }
-  have(spec) { let n = 0; for (const s of this.bag) if (ITEMS[s.name].tags.has(spec)) n += s.count; return n; }
+  have(spec) { let n = 0; for (const s of this.bag) if (matches(s, spec)) n += s.count; return n; }
   iname(s) { let n = s.name; if (s.mut) n = s.mut + " " + n; if (s.q) n += ` (${s.q})`; return n; }
   removeStack(lst, s) { const i = lst.indexOf(s); if (i >= 0) lst.splice(i, 1); }
 
@@ -636,7 +640,7 @@ class Game {
     }
     const [mut, mm] = this.rollMut(0.03*(1 + luck*0.3));
     const got = this.addItem(name, value*mm*uniform(0.9, 1.2), mut);
-    if (!dive) this.holes.set(key(tx, ty), 90);
+    if (!dive) this.holes.set(key(tx, ty), HOLE_TIME);
     if (got) { this.inc("digs"); this.gainXp(3*(ri+1)); const label = (mut ? mut + " " : "") + name;
       this.floatText(x, y-30, `Found: ${label}!`, RCOL[RAR[ri]], 26); this.note(`Dug up ${label} (${RAR[ri]})`, RCOL[RAR[ri]]); this.burst(x, y, col, 12, 120); this.rareFx(label, ri, x, y); }
   }
@@ -766,11 +770,16 @@ class Game {
     if (this.dinerT <= 0 && free.length) {
       this.dinerT = uniform(18, 30)/(this.has("cook2") ? 2 : 1);
       const owned = this.bag.filter(s => ITEMS[s.name].cat === "food").map(s => s.name);
-      const dish = owned.length && rnd() < 0.6 ? choice(owned) : choice(RECIPES)[0], s = choice(free), [tx, ty] = TABLES[s];
-      this.diners.push({seat: s, dish, x: tx*TS+16, y: ty*TS+46, patience: 150, pal: randint(0, 3)});
+      const cookable = RECIPES.filter(r => this.plan(r)).map(r => r[0]), roll = rnd(); // order things you have or can make
+      const dish = owned.length && roll < 0.7 ? choice(owned) : cookable.length && roll < 0.95 ? choice(cookable) : choice(["Grilled Fish", "Roast Meat", "Veggie Stew"]);
+      const s = choice(free), [tx, ty] = TABLES[s];
+      this.diners.push({seat: s, dish, x: tx*TS+16, y: ty*TS+46, patience: DINER_PATIENCE, pal: randint(0, 3)});
     }
     for (const d of [...this.diners]) { d.patience -= dt; if (d.patience <= 0) { this.diners.splice(this.diners.indexOf(d), 1); this.note("A diner got tired of waiting and left!", ORANGE); } }
   }
+  canServe(d) { return this.bag.some(s => s.name === d.dish); }
+  serveAll() { let n = 0; for (const d of [...this.diners]) if (this.canServe(d)) { this.serve(d); n++; }
+    if (n) this.note(`Served ${n} diner${n > 1 ? "s" : ""}!`, GOLD); else this.note("You don't have any of the dishes they ordered yet. Cook them first!", ORANGE); }
   serve(d) {
     const stacks = this.bag.filter(s => s.name === d.dish);
     if (!stacks.length) { this.note(`Diner wants ${d.dish} - cook it at the KITCHEN!`, ORANGE); return; }
@@ -785,16 +794,23 @@ class Game {
   plan(r) {
     const counts = new Map(this.bag.map(s => [s, s.count])), sorted = [...this.bag].sort((a, b) => a.value - b.value);
     for (let [spec, n] of this.orderedSpecs(r)) {
-      for (const s of sorted) { if (ITEMS[s.name].tags.has(spec) && counts.get(s) > 0) { const k = Math.min(n, counts.get(s)); counts.set(s, counts.get(s)-k); n -= k; } if (!n) break; }
+      for (const s of sorted) { if (matches(s, spec) && counts.get(s) > 0) { const k = Math.min(n, counts.get(s)); counts.set(s, counts.get(s)-k); n -= k; } if (!n) break; }
       if (n > 0) return false;
     }
     return true;
+  }
+  foodValue(r, val, q) { return (val*1.3 + 15 + r[5]*0.5) * QMULT[q] * (this.has("cook1") ? 1.25 : 1) * (this.has("cook4") ? 2 : 1); }
+  quickCook(r, n=1) { // no minigame, always Good quality
+    let made = 0, total = 0;
+    for (let i = 0; i < n && this.plan(r); i++) { let val = 0; for (const [spec, k] of this.orderedSpecs(r)) val += this.take(spec, k) || 0;
+      const v = this.foodValue(r, val, "Good"); this.addItem(r[0], v, "", "Good"); made++; total += v; }
+    if (made) { this.inc("cooked", made); this.gainXp(6*made); this.note(`Cooked ${made}x ${r[0]}! Worth ${fmt(total)}c`, GREEN); this.burst(this.px, this.py, [255,190,90], 12, 120); }
   }
   startCook(r) { if (!this.plan(r)) return; let val = 0; for (const [spec, n] of this.orderedSpecs(r)) val += this.take(spec, n) || 0; this.cook = {r, val, pos: 0, dir: 1, spd: 1, t: 0}; }
   cookStop() {
     const c = this.cook, off = Math.abs(c.pos - 0.5);
     let q = off < 0.04 ? "Gourmet" : off < 0.12 ? "Perfect" : off < 0.35 ? "Good" : "Burnt"; if (c.t > 7) q = "Burnt";
-    const r = c.r, value = (c.val*1.3 + 15 + r[5]*0.5) * QMULT[q] * (this.has("cook1") ? 1.25 : 1) * (this.has("cook4") ? 2 : 1);
+    const r = c.r, value = this.foodValue(r, c.val, q);
     this.addItem(r[0], value, "", q); this.inc("cooked"); this.gainXp(8);
     this.note(`Cooked ${r[0]} (${q})! Worth ${fmt(value)}c`, QUAL.find(x => x[0] === q)[2]);
     if (q === "Gourmet") this.doBanner("GOURMET!!", `${r[0]} worth ${fmt(value)} coins`, PINK);
@@ -977,6 +993,7 @@ class Game {
     this.petPos.forEach((pp, k) => { const a = Math.PI/2 + (k - (this.petPos.length-1)/2)*0.9 - Math.atan2(this.facing[0], this.facing[1]);
       pp[0] += (this.px + Math.cos(a)*38 - pp[0])*Math.min(1, dt*4); pp[1] += (this.py + Math.sin(a)*30 - pp[1])*Math.min(1, dt*4); });
     if (!busy) this.checkQuest();
+    if (this.waypoint && dist(this.px, this.py, ...this.poi.cook) < 90) this.waypoint = null;
     this.saveT += dt; if (this.saveT > 60) { this.saveT = 0; this.save(); }
     let cx = clamp(this.px - W/2, 0, MW*TS - W), cy = clamp(this.py - H/2, 0, MH*TS - H);
     if (this.shake > 0) { cx += uniform(-6, 6); cy += uniform(-6, 6); }
@@ -994,7 +1011,7 @@ class Game {
     for (let ty = y0; ty < Math.min(MH, y0 + H/TS + 2); ty++) for (let tx = x0; tx < Math.min(MW, x0 + W/TS + 2); tx++)
       if (isWater(this.tiles[ty][tx]) && (tx*7 + ty*13) % 5 === 0) { const ox = Math.sin(this.t*2 + tx + ty)*6, sx = tx*TS - cx, sy = ty*TS - cy; line(sx+8+ox, sy+20, sx+18+ox, sy+20, [150,200,245], 2); }
     for (const s of this.shadows) if (this.onScreen(s[0], s[1])) { const [sx, sy] = this.w2s(s[0], s[1]); ellipse(sx-9, sy-4, 18, 8, [25,70,130]); }
-    for (const [h] of this.holes) { const tx = h%MW, ty = Math.floor(h/MW); if (this.onScreen(tx*TS, ty*TS)) { const [sx, sy] = this.w2s(tx*TS, ty*TS); ellipse(sx+4, sy+8, 24, 16, [70,45,30]); ellipse(sx+8, sy+11, 16, 10, [40,25,15]); } }
+    for (const [h, tl] of this.holes) { const tx = h%MW, ty = Math.floor(h/MW); if (this.onScreen(tx*TS, ty*TS)) { const [sx, sy] = this.w2s(tx*TS+16, ty*TS+16), k = Math.min(1, tl/4); ellipse(sx-12*k, sy-8*k, 24*k, 16*k, [70,45,30]); ellipse(sx-8*k, sy-5*k, 16*k, 10*k, [40,25,15]); } }
     for (const k of this.sparkles) { const tx = k%MW, ty = Math.floor(k/MW); if (this.onScreen(tx*TS, ty*TS)) { const [sx, sy] = this.w2s(tx*TS+16, ty*TS+16), r = 4 + 3*Math.abs(Math.sin(this.t*4 + tx)); line(sx-r, sy, sx+r, sy, [255,250,180], 2); line(sx, sy-r, sx, sy+r, [255,250,180], 2); } }
     this.drawPlots();
     for (const [tx, ty] of TABLES) { const [sx, sy] = this.w2s(tx*TS, ty*TS); rrect(sx+2, sy+4, 28, 22, 4, [150,100,60]); rect(sx+4, sy+6, 24, 6, [240,240,240]); }
@@ -1092,7 +1109,7 @@ class Game {
   drawDiner(d) {
     const [sx, sy] = this.w2s(d.x, d.y); spr(`p_diner${d.pal}_up_0`, sx, sy);
     this.bubble(sx, sy-60, ["Order:", d.dish]); icon(d.dish, sx + 44, sy-76, 26);
-    const f = d.patience/150; this.hpBar(sx, sy+6, f, f > 0.4 ? GREEN : RED, 40);
+    const f = d.patience/DINER_PATIENCE; this.hpBar(sx, sy+6, f, f > 0.4 ? GREEN : RED, 40);
   }
   drawPet(sx, sy, name, sc=1) { const f = FRAMES["pet_" + name], k = sc*0.6; ctx.drawImage(ATLAS, f[0], f[1], f[2], f[3], Math.round(sx - 36*k), Math.round(sy - 46*k), f[2]*k, f[3]*k); }
   drawPetWorld(k) { if (k >= this.equipped.length) return; const pp = this.petPos[k], [sx, sy] = this.w2s(pp[0], pp[1] + Math.sin(this.t*6 + k)*3); this.drawPet(sx, sy, this.pets[this.equipped[k]]); }
@@ -1166,6 +1183,8 @@ class Game {
     let yy = this.touch ? 134 : 124;
     for (const k in this.boosts) if (this.boosts[k] > 0) { const v = this.boosts[k]; text(`2x ${k.toUpperCase()}  ${Math.floor(v/60)}:${String(Math.floor(v%60)).padStart(2,"0")}`, W-16, yy, 20, PINK, "tr"); yy += 22; }
     if (this.vip) { text("VIP  +50% coins", W-16, yy, 20, GOLD, "tr"); yy += 22; }
+    if (this.restaurant) { const n = this.diners.length, lab = (n ? `RESTAURANT: ${n} waiting` : "RESTAURANT: no diners") + (this.waypoint ? "  (arrow on)" : "");
+      this.button(W-296, yy+4, 280, 30, lab, () => { this.waypoint = this.waypoint ? null : "cook"; }, n ? ORANGE : PANEL3, true, 19); yy += 40; }
     if (!this.starterBought && this.starterLeft > 0) { const sl = Math.floor(this.starterLeft); this.button(W-236, yy+4, 220, 32, `STARTER PACK -90%  ${Math.floor(sl/60)}:${String(sl%60).padStart(2,"0")}`, () => this.openMenu("gems"), [210,60,150], true, 19); yy += 40; }
     [...this.notes].reverse().forEach((n, i) => text(n[0], W-16, yy+6+i*24, 21, n[1], "tr"));
     const [kind, obj, h0] = this.context(); let hint = h0;
@@ -1179,9 +1198,10 @@ class Game {
       const mw = MW*1.5, mh = MH*1.5, mx = W - mw - 16, my = H - mh - 16;
       rrect(mx-4, my-4, mw+8, mh+8, 6, [10,10,20]); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mini, mx, my, mw, mh); ctx.imageSmoothingEnabled = true;
       circle(mx + this.px/TS*1.5, my + this.py/TS*1.5, 4, WHITE); circle(mx + this.px/TS*1.5, my + this.py/TS*1.5, 3, RED);
-      const tg = this.questTarget(); if (tg) circle(mx + tg[0]/TS*1.5, my + tg[1]/TS*1.5, 4, GOLD, 2);
+      const tg = this.waypoint ? this.poi.cook : this.questTarget(); if (tg) circle(mx + tg[0]/TS*1.5, my + tg[1]/TS*1.5, 4, GOLD, 2);
+      for (const d of this.diners) circle(mx + d.x/TS*1.5, my + d.y/TS*1.5, 3, ORANGE);
     }
-    const tg = this.questTarget();
+    const tg = this.waypoint ? this.poi.cook : this.questTarget();
     if (tg) { const d = dist(tg[0], tg[1], this.px, this.py);
       if (d > 220) { const a = Math.atan2(tg[1]-this.py, tg[0]-this.px), [sx, sy] = this.w2s(this.px, this.py), cx = sx + Math.cos(a)*70, cy = sy + Math.sin(a)*70;
         poly([[cx + Math.cos(a)*16, cy + Math.sin(a)*16], [cx + Math.cos(a+2.5)*12, cy + Math.sin(a+2.5)*12], [cx + Math.cos(a-2.5)*12, cy + Math.sin(a-2.5)*12]], shade(GOLD, 40*Math.sin(this.t*6)));
@@ -1407,23 +1427,34 @@ class Game {
   }
   menu_cook() {
     const [x, y, w] = this.panel("KITCHEN");
-    text(`${this.touch ? "Tap" : "Click"} COOK, then ${this.touch ? "tap STOP" : "press SPACE"} when the marker is in the middle!`, x+24, y+66, 22, [200,220,255]);
-    RECIPES.forEach((rcp, i) => {
-      const rx = x+20, r_y = y+100+i*58, ok = this.plan(rcp); rrect(rx, r_y, 620, 52, 10, ok ? PANEL2 : [40,42,54]); circle(rx+24, r_y+26, 13, rcp[6]);
-      text(rcp[0], rx+48, r_y+6, 24, ok ? WHITE : GREY); let cx = rx + 48;
-      for (const [spec, n] of rcp[1]) { const hv = this.have(spec); cx = text(`${n}x ${GENERIC.has(spec) ? "any " + spec : spec} (${hv})`, cx, r_y+30, 17, hv >= n ? GREEN : RED).right + 12; }
-      this.button(rx+620-110, r_y+8, 96, 36, "COOK", () => this.startCook(rcp), ORANGE, ok, 22);
+    text("QUICK = cook 1 now    MAX = cook all you can    COOK = minigame for Perfect & Gourmet food", x+24, y+66, 20, [200,220,255]);
+    [...RECIPES].sort((a, b) => (this.plan(a) ? 0 : 1) - (this.plan(b) ? 0 : 1)).forEach((rcp, i) => {
+      const rx = x+20, ry = y+94 + i*58, rw = 640, ok = this.plan(rcp);
+      rrect(rx, ry, rw, 52, 10, ok ? PANEL2 : [40,42,54]); icon(rcp[0], rx+26, ry+26, 38);
+      text(rcp[0], rx+52, ry+5, 24, ok ? WHITE : GREY); let cx = rx + 52;
+      for (const [spec, n] of rcp[1]) { const hv = this.have(spec); cx = text(`${n} ${ingLabel(spec)} (${hv})`, cx, ry+30, 17, hv >= n ? GREEN : RED).right + 10; }
+      this.button(rx+rw-246, ry+8, 82, 36, "COOK", () => this.startCook(rcp), ORANGE, ok, 21);
+      this.button(rx+rw-158, ry+8, 80, 36, "QUICK", () => this.quickCook(rcp, 1), GREEN, ok, 21);
+      this.button(rx+rw-72, ry+8, 62, 36, "MAX", () => this.quickCook(rcp, 99), [60,170,190], ok, 21);
     });
-    const rx = x + 660, rw = w - 680, nf = this.have("fish");
-    rrect(rx, y+100, rw, 150, 12, PANEL2); text("SCALE & FILLET", rx+16, y+110, 28, [250,170,150]);
-    text("Turn raw fish into Fish Fillets", rx+16, y+142, 20, [210,210,230]); text("(+ Fish Scales). Rare fish = more!", rx+16, y+162, 20, [210,210,230]);
-    this.button(rx+16, y+192, rw-32, 44, `SCALE ${nf} FISH`, () => this.scaleFish(), [220,120,100], nf > 0, 24);
-    rrect(rx, y+270, rw, 300, 12, PANEL2); text("RESTAURANT", rx+16, y+280, 28, GOLD);
-    if (!this.restaurant) { ["Open tables outside the kitchen.", "Diners order dishes and pay", "1.5x value + TIPS!"].forEach((l, i) => text(l, rx+16, y+314+i*22, 20, [210,210,230]));
-      this.button(rx+16, y+400, rw-32, 50, "OPEN IT! (400 coins)", () => this.openRestaurant(), GREEN, true, 24); }
-    else { text(`OPEN!  Diners waiting: ${this.diners.length}`, rx+16, y+314, 22, GREEN);
-      this.diners.forEach((d, i) => text(`Table ${d.seat+1}: ${d.dish}`, rx+16, y+344+i*26, 20, this.bag.some(s => s.name === d.dish) ? GREEN : WHITE));
-      text(`Walk to a diner and ${this.touch ? "tap USE" : "press E"} to serve.`, rx+16, y+540, 18, GREY); }
+    const rx = x + 680, rw = w - 700;
+    rrect(rx, y+94, rw, 384, 12, PANEL2); text("RESTAURANT", rx+16, y+104, 28, GOLD);
+    if (!this.restaurant) {
+      ["Tables outside the kitchen.", "Diners order food and pay", "1.5x its value + TIPS!", "Serve them right here."].forEach((l, i) => text(l, rx+16, y+142 + i*24, 21, [210,210,230]));
+      this.button(rx+16, y+250, rw-32, 50, "OPEN IT! (400 coins)", () => this.openRestaurant(), GREEN, true, 24);
+    } else {
+      text(`OPEN!  ${this.diners.length}/4 tables full`, rx+16, y+136, 21, GREEN);
+      if (!this.diners.length) text("Waiting for diners to arrive...", rx+16, y+180, 20, GREY);
+      this.diners.forEach((d, i) => { const ry = y+166 + i*62, f = d.patience/DINER_PATIENCE;
+        rrect(rx+10, ry, rw-20, 56, 8, PANEL); icon(d.dish, rx+34, ry+28, 36); text(d.dish, rx+58, ry+6, 21); text(`Table ${d.seat+1}`, rx+58, ry+30, 17, GREY);
+        rrect(rx+150, ry+36, 90, 6, 3, [20,20,24]); rrect(rx+150, ry+36, Math.max(2, 90*f), 6, 3, f > 0.4 ? GREEN : RED);
+        this.button(rx+rw-106, ry+10, 86, 36, "SERVE", () => this.serve(d), GREEN, this.canServe(d), 21); });
+      this.button(rx+16, y+422, rw-32, 44, "SERVE ALL I CAN", () => this.serveAll(), GOLD, this.diners.some(d => this.canServe(d)), 22, BLACK);
+    }
+    const nf = this.bag.filter(s => ITEMS[s.name].tags.has("fish")).reduce((a, s) => a + s.count, 0);
+    rrect(rx, y+490, rw, 136, 12, PANEL2); text("SCALE & FILLET  (optional)", rx+16, y+500, 22, [250,170,150]);
+    text("Raw fish already work in recipes.", rx+16, y+528, 18, [210,210,230]); text("Epic+ and mutated fish are never cooked.", rx+16, y+548, 18, [210,210,230]);
+    this.button(rx+16, y+574, rw-32, 40, `SCALE ${nf} FISH`, () => this.scaleFish(), [220,120,100], nf > 0, 21);
   }
   drawCooking() {
     this.buttons = []; const c = this.cook; dim(0.67);
