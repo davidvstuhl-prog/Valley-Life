@@ -202,7 +202,7 @@ const CATS = [["All",null],["Fish","fish"],["Wood","wood"],["Ore","ore"],["Dig",
 const QUESTS = [
   ["Catch a fish! Aim at water, HOLD F, let go","fish",1,50,5,"river"],["Chop 5 logs: press E at a tree on the GREEN","logs",5,60,5,"forest"],
   ["Dig up 3 things: HOLD Q on grass","digs",3,60,5,null],["Sell your stuff at the MARKET","sold",1,50,5,"market"],
-  ["Plant a seed: press E on a garden plot","planted",1,40,5,"garden"],["Hunt an animal: CLICK = spear, RIGHT-CLICK = axe up close","kills",1,80,10,null],
+  ["Plant a seed: press E on a garden plot","planted",1,40,5,"garden"],["Hunt an animal: RIGHT-CLICK = spear, CLICK = axe up close","kills",1,80,10,null],
   ["Cook a meal at the KITCHEN","cooked",1,80,10,"cook"],["Buy an upgrade at the UPGRADES hall","skills",1,100,10,"skills"],
   ["Hatch a pet at the PET HATCHERY","hatched",1,100,15,"pets"],["Mine 5 ores in the CAVE (north-east)","ores",5,150,15,"cave"],
   ["Finish an order for a town NPC","orders",1,150,15,null],["Open your RESTAURANT & serve a diner","served",1,300,25,"cook"],
@@ -446,7 +446,7 @@ class Game {
       "Tap the buttons at the top for your BAG, UPGRADES, PETS and GEMS", "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"] : [
       "WASD / Arrows - walk      SHIFT - sprint", "E - use stuff: chop tree, mine rock, plant/harvest, drink, talk, enter",
       "HOLD F, aim with mouse, let go - cast rod.  Press F/SPACE on the  !", "Reeling: HOLD SPACE or mouse - keep the fish in the green box",
-      "HOLD Q - dig up treasure (or dive for loot in deep water)", "LEFT CLICK - throw spear    RIGHT CLICK - chop / mine / axe animals up close", "R - eat best food",
+      "HOLD Q - dig up treasure (or dive for loot in deep water)", "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear", "R - eat best food",
       "B - build campfire (3 logs, cook anywhere)   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
       "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"];
     this.popup("HOW TO PLAY", lines, [["LET'S GO!", null, GREEN]], CYAN);
@@ -510,14 +510,14 @@ class Game {
       return ["plot", i, `${p.crop} growing... ${Math.floor(p.prog*100)}%`]; }
     for (const c of this.campfires) if (dist(c[0], c[1], this.px, this.py) < 50) return ["fire", c, `${E} Cook at campfire`];
     const t = this.nearTree(); if (t) return ["tree", t, `${E} Chop ${TREES[t.t][0]} - hit when the needle is GREEN!`];
-    const o = this.nearOre(); if (o) { const slow = ORES[o.o][1] > PICKS[this.tools.pick][4]; return ["ore", o, `${this.touch ? "[Hold USE]" : "[Hold E / right click]"} Mine ${ORES[o.o][0]}` + (slow ? `  (very slow - a ${TIER_NAMES[ORES[o.o][1]]} Pickaxe is faster)` : "")]; }
+    const o = this.nearOre(); if (o) { const slow = ORES[o.o][1] > PICKS[this.tools.pick][4]; return ["ore", o, `${this.touch ? "[Hold USE]" : "[Hold E / click]"} Mine ${ORES[o.o][0]}` + (slow ? `  (very slow - a ${TIER_NAMES[ORES[o.o][1]]} Pickaxe is faster)` : "")]; }
     const tile = this.tileAt(this.px, this.py);
     if (this.nearWater() && tile !== DEEP) return ["water", null, `${E} Drink water    ${F} Fish`];
     if (tile === DEEP) return ["swim", null, `Swimming! ${Q} Dive for treasure - watch your OXYGEN!`];
-    const an = this.nearAnimal(); if (an) return [null, null, `${this.touch ? "[USE]" : "[Right click / E]"} Hit the ${an.kind} with your axe!`];
+    const an = this.nearAnimal(); if (an) return [null, null, `${this.touch ? "[USE]" : "[Click / E]"} Hit the ${an.kind} with your axe!`];
     return [null, null, ""];
   }
-  rightClick() { const a = this.nearAnimal(); if (a) this.axeHit(a); else this.interact(); } // axe an animal up close, else chop / mine / use
+  useClick() { const a = this.nearAnimal(); if (a) this.axeHit(a); else this.interact(); } // left click: axe an animal up close, else chop / mine / use
   forestHere() { const tx = Math.floor(this.px/TS), ty = Math.floor(this.py/TS); if (tx >= 48 && tx <= 94 && ty >= 38 && ty <= 72) return null;
     const f = forestOf(tx, ty); return dist(tx, ty, FORESTS[f][1], FORESTS[f][2]) < 26 ? f : null; }
   nearAnimal(reach=60) { let best = null, bd = reach; for (const a of this.animals) { const d = dist(a.x, a.y, this.px, this.py) - ANIMALS[a.kind].size*0.5; if (d < bd) { bd = d; best = a; } } return best; }
@@ -935,7 +935,7 @@ class Game {
     if (this.cook) { this.cookStop(); return; }
     if (this.menu) return;
     if (this.fish) { if (this.fish.s === "bite") this.hook(); return; }
-    if (!this.touch) this.attack();
+    if (!this.touch) this.useClick(); // left click: chop / mine / axe / use
   }
   keyDown(k) {
     if (this.popups.length) { if (k === "Enter" || k === "Escape" || k === "Space") { const p = this.popups.pop(); if (k !== "Escape" && p.buttons[0][1]) p.buttons[0][1](); } return; }
@@ -997,7 +997,7 @@ class Game {
       if (this.food > 40 && this.water > 40 && this.hp < 100) this.hp = Math.min(100, this.hp + (0.8*(this.has("surv3") ? 3 : 1) + this.pb("regen"))*dt);
       if (this.hp <= 0) this.die();
       this.updateDig(dt);
-      if ((this.keys.has("KeyE") || this.rightDown) && this.mineCd <= 0) { const [kind, obj] = this.context(); if (kind === "ore") this.mine(obj); }
+      if ((this.keys.has("KeyE") || (!this.touch && this.down.size > 0)) && this.mineCd <= 0) { const [kind, obj] = this.context(); if (kind === "ore") this.mine(obj); }
       this.updateFish(dt);
     }
     this.updateAnimals(dt); this.updateNpcs(dt);
@@ -1231,7 +1231,7 @@ class Game {
     if (!this.touch) {
       const seed = CROPS[this.selSeed][0];
       text(`Bag ${this.count(this.bag)}/${this.bagCap()}    Seed: ${seed} x${this.seeds[seed] || 0} [Z]    Rod: ${RODS[this.tools.rod][0]}    Weapon: ${WEAPONS[this.tools.weapon][0]}`, 16, H-54, 20, [230,230,240]);
-      text("WASD move | E use | Left click spear | Right click chop/mine/axe | F fish | Q dig | R eat | Esc", 16, H-28, 19, [190,190,210]);
+      text("WASD move | E use | Left click chop/mine/axe | Right click spear | F fish | Q dig | R eat | Esc", 16, H-28, 19, [190,190,210]);
       const mw = MW*1.5, mh = MH*1.5, mx = W - mw - 16, my = H - mh - 16;
       rrect(mx-4, my-4, mw+8, mh+8, 6, [10,10,20]); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mini, mx, my, mw, mh); ctx.imageSmoothingEnabled = true;
       circle(mx + this.px/TS*1.5, my + this.py/TS*1.5, 4, WHITE); circle(mx + this.px/TS*1.5, my + this.py/TS*1.5, 3, RED);
@@ -1556,13 +1556,13 @@ canvas.addEventListener("pointerdown", e => {
     if (dist(x, y, JOY.x, JOY.y) < JOY.r + 40) { game.joy = {id: e.pointerId, dx: x - JOY.x, dy: y - JOY.y}; return; }
     for (const b of TBTN) if (dist(x, y, b.x, b.y) < b.r + 10) { game.touchHeld.set(e.pointerId, b.id); game.keys.add(b.id); game.keyDown(b.id); return; }
   }
-  if (e.pointerType === "mouse" && e.button === 2) { // right click: chop / mine / axe
-    game.rightDown = true; if (!(game.popups.length || game.title || game.hatch || game.cook || game.menu || game.fish)) game.rightClick(); return; }
+  if (e.pointerType === "mouse" && e.button === 2) { // right click: throw spear
+    if (!(game.popups.length || game.title || game.hatch || game.cook || game.menu || game.fish)) game.attack(); return; }
   game.down.add(e.pointerId); game.click(x, y);
 });
 canvas.addEventListener("pointermove", e => { const [x, y] = toCanvas(e); if (game.joy && game.joy.id === e.pointerId) { game.joy.dx = x - JOY.x; game.joy.dy = y - JOY.y; } else if (!game.touchHeld.has(e.pointerId)) game.mouse = [x, y]; });
 function release(e) {
-  if (e.pointerType === "mouse" && e.button === 2) { game.rightDown = false; return; }
+  if (e.pointerType === "mouse" && e.button === 2) return;
   if (game.joy && game.joy.id === e.pointerId) game.joy = null;
   const k = game.touchHeld.get(e.pointerId); if (k) { game.touchHeld.delete(e.pointerId); if (![...game.touchHeld.values()].includes(k)) { game.keys.delete(k); game.keyUp(k); } }
   game.down.delete(e.pointerId);

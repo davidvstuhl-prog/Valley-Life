@@ -280,7 +280,7 @@ QUESTS = [
     ("Dig up 3 things: HOLD Q on grass", "digs", 3, 60, 5, None),
     ("Sell your stuff at the MARKET", "sold", 1, 50, 5, "market"),
     ("Plant a seed: press E on a garden plot", "planted", 1, 40, 5, "garden"),
-    ("Hunt an animal: CLICK = spear, RIGHT-CLICK = axe up close", "kills", 1, 80, 10, None),
+    ("Hunt an animal: RIGHT-CLICK = spear, CLICK = axe up close", "kills", 1, 80, 10, None),
     ("Cook a meal at the KITCHEN", "cooked", 1, 80, 10, "cook"),
     ("Buy an upgrade at the UPGRADES hall", "skills", 1, 100, 10, "skills"),
     ("Hatch a pet at the PET HATCHERY", "hatched", 1, 100, 15, "pets"),
@@ -884,7 +884,7 @@ class Game:
                                    "HOLD F, aim with mouse, let go - cast rod.  Press F/SPACE on the  !",
                                    "Reeling: HOLD SPACE or mouse - keep the fish in the green box",
                                    "HOLD Q - dig up treasure (or dive for loot in deep water)",
-                                   "LEFT CLICK - throw spear    RIGHT CLICK - chop / mine / axe animals up close",
+                                   "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear",
                                    "R - eat best food",
                                    "B - build campfire (3 logs, cook anywhere)   Z - change seed",
                                    "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
@@ -1057,7 +1057,7 @@ class Game:
         o = self.near_ore()
         if o:
             slow = ORES[o["o"]][1] > PICKS[self.tools["pick"]][4]
-            return "ore", o, (f"[Hold E / right click] Mine {ORES[o['o']][0]}"
+            return "ore", o, (f"[Hold E / click] Mine {ORES[o['o']][0]}"
                               + (f"  (very slow - a {TIER_NAMES[ORES[o['o']][1]]} Pickaxe is faster)" if slow else ""))
         if self.near_water() and self.tile_at(self.px, self.py) != DEEP:
             return "water", None, "[E] Drink water    [Hold F] Fish"
@@ -1065,7 +1065,7 @@ class Game:
             return "swim", None, "Swimming! [Hold Q] Dive for treasure - watch your OXYGEN!"
         a = self.near_animal()
         if a:
-            return None, None, f"[Right click / E] Hit the {a['kind']} with your axe!"
+            return None, None, f"[Click / E] Hit the {a['kind']} with your axe!"
         return None, None, ""
 
     def interact(self):
@@ -1091,8 +1091,8 @@ class Game:
         elif kind is None and self.near_animal():
             self.axe_hit(self.near_animal())
 
-    def right_click(self):
-        """Right click: axe an animal that's close, otherwise chop / mine / use whatever is in front of you."""
+    def use_click(self):
+        """Left click: axe an animal that's close, otherwise chop / mine / use whatever is in front of you."""
         a = self.near_animal()
         if a:
             self.axe_hit(a)
@@ -2015,7 +2015,7 @@ class Game:
                 self.sel_seed = (self.sel_seed - ev.y) % len(CROPS)
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
             if not (self.popups or self.title or self.hatch or self.cook or self.menu or self.fish):
-                self.right_click()
+                self.attack()   # right click: throw spear
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             self.mouse = ev.pos
             for r, cb in reversed(self.buttons):
@@ -2038,7 +2038,7 @@ class Game:
                 if self.fish["s"] == "bite":
                     self.hook()
                 return
-            self.attack()
+            self.use_click()   # left click: chop / mine / axe / use
         elif ev.type == pygame.KEYDOWN:
             k = ev.key
             if self.popups:
@@ -2178,7 +2178,7 @@ class Game:
             if self.hp <= 0:
                 self.die()
             self.update_dig(dt, keys)
-            if (keys[pygame.K_e] or pygame.mouse.get_pressed()[2]) and self.mine_cd <= 0:   # hold E / right click to keep mining
+            if (keys[pygame.K_e] or pygame.mouse.get_pressed()[0]) and self.mine_cd <= 0:   # hold E / left click to keep mining
                 kind, obj, _ = self.context()
                 if kind == "ore":
                     self.mine(obj)
@@ -2791,7 +2791,7 @@ class Game:
         bag = f"Bag {self.count(self.bag)}/{self.bag_cap()}"
         self.text(f"{bag}    Seed: {seed} x{self.seeds.get(seed, 0)} [Z]    Rod: {RODS[self.tools['rod']][0]}    "
                   f"Weapon: {WEAPONS[self.tools['weapon']][0]}", (16, H - 54), 20, (230, 230, 240))
-        self.text("WASD move | E use | Left click spear | Right click chop/mine/axe | F fish | Q dig | R eat | Esc",
+        self.text("WASD move | E use | Left click chop/mine/axe | Right click spear | F fish | Q dig | R eat | Esc",
                   (16, H - 28), 19, (190, 190, 210))
         # minimap
         mw, mh = self.mini.get_size()
