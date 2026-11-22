@@ -719,8 +719,156 @@ def _rock(p, col, crystal=True):
             p.poly(sh(col, 45), [(x, y - s * 1.3), (x, y + s), (x - s * 0.75, y)])
 
 
+TIER_METAL = {"Copper": (214, 124, 64), "Iron": (196, 200, 212), "Stone": (150, 148, 156), "Bamboo": (206, 192, 96),
+              "Fiberglass": (236, 240, 255)}
+
+
+def _tool(p, kind, metal):
+    wood = (150, 102, 58)
+    if kind == "axe":
+        p.ol(wood, [(12, 42), (32, 8)], 3.5)
+        p.op(metal, [(26, 8), (40, 6), (42, 18), (30, 20)], 1.2)
+        p.poly(sh(metal, 40), [(28, 9), (39, 7), (40, 11), (29, 12)])
+    elif kind == "pick":
+        p.ol(wood, [(14, 42), (30, 12)], 3.5)
+        p.ol(metal, [(10, 16), (22, 8), (34, 8), (44, 18)], 4.5)
+        p.path(sh(metal, 45), [(14, 13), (22, 9), (30, 9)], 1.4)
+    elif kind == "shovel":
+        p.ol(wood, [(14, 44), (30, 16)], 3.5)
+        p.op(metal, [(26, 18), (36, 4), (44, 10), (34, 24)], 1.2)
+        p.poly(sh(metal, 40), [(28, 17), (36, 6), (39, 8), (31, 20)])
+    elif kind == "spear":
+        p.ol(wood, [(8, 44), (34, 14)], 3)
+        p.op(metal, [(32, 12), (44, 4), (38, 18)], 1.2)
+        p.ol((220, 200, 150), [(28, 20), (24, 16)], 2, 0.8)
+    elif kind == "bow":
+        p.path(OUT, [(14, 4), (26, 12), (30, 24), (26, 36), (14, 44)], 6)
+        p.path(wood, [(14, 4), (26, 12), (30, 24), (26, 36), (14, 44)], 3.5)
+        p.line((235, 235, 225), 14, 5, 14, 43, 1.2)
+        p.ol((150, 102, 58), [(10, 24), (40, 24)], 1.6, 0.8)
+        p.op(metal, [(38, 20), (46, 24), (38, 28)], 1)
+    elif kind == "rod":
+        p.ol(metal, [(8, 44), (38, 6)], 3)
+        p.oc((60, 60, 70), 14, 36, 4)
+        p.path((240, 240, 240), [(38, 6), (44, 20), (42, 34)], 1)
+        p.oc((230, 60, 60), 42, 36, 3.5, 1)
+    elif kind == "bag":
+        p.oe(metal, 24, 30, 16, 14)
+        p.orr(sh(metal, -20), 10, 18, 28, 10, 5)
+        p.ol(sh(metal, -40), [(14, 18), (18, 6), (30, 6), (34, 18)], 2.5)
+        p.oc((255, 210, 70), 24, 24, 2.6, 0.9)
+
+
+def craft_icon(p, name):
+    """Icons for crafted things that aren't plain items. Returns False if the name isn't one of them."""
+    tools = {"Copper Axe": ("axe", "Copper"), "Iron Axe": ("axe", "Iron"), "Copper Pickaxe": ("pick", "Copper"),
+             "Iron Pickaxe": ("pick", "Iron"), "Iron Shovel": ("shovel", "Iron"), "Stone Spear": ("spear", "Stone"),
+             "Hunting Bow": ("bow", "Iron"), "Bamboo Rod": ("rod", "Bamboo"), "Fiberglass Rod": ("rod", "Fiberglass"),
+             "Satchel": ("bag", (160, 108, 64)), "Rucksack": ("bag", (110, 120, 80))}
+    if name in tools:
+        kind, metal = tools[name]
+        _tool(p, kind, TIER_METAL.get(metal, metal) if isinstance(metal, str) else metal)
+        return True
+    if name == "Plank":
+        for y, c in ((26, (214, 170, 110)), (14, (226, 184, 124))):
+            p.orr(c, 4, y, 40, 10, 2)
+            p.line(sh(c, -40), 8, y + 4, 40, y + 4, 1)
+            p.circle(sh(c, -55), 34, y + 6, 1.2)
+    elif name == "Rope":
+        for r in (16, 11, 6):
+            p.circle(OUT, 24, 24, r + 2.6)
+            p.circle((206, 176, 120), 24, 24, r + 1.4)
+            p.circle(sh((206, 176, 120), -35), 24, 24, r - 0.6)
+        p.circle((206, 176, 120), 24, 24, 3)
+        p.ol((206, 176, 120), [(38, 30), (44, 42)], 2.5)
+    elif name == "Leather":
+        p.op((150, 98, 58), [(6, 12), (40, 8), (44, 36), (10, 40)], 1.3)
+        p.poly((176, 120, 74), [(10, 14), (38, 11), (30, 22), (12, 24)])
+        for k in range(6):
+            p.line((240, 220, 180), 9 + k * 5.5, 36 - k * 0.6, 12 + k * 5.5, 36 - k * 0.6, 1)
+    elif name in ("Copper Bar", "Iron Bar", "Gold Bar"):
+        c = {"Copper Bar": (214, 124, 64), "Iron Bar": (196, 200, 212), "Gold Bar": (255, 205, 60)}[name]
+        p.op(sh(c, -25), [(6, 36), (12, 20), (36, 20), (42, 36)], 1.3)
+        p.poly(sh(c, 30), [(13, 21), (35, 21), (32, 26), (16, 26)])
+        p.line((255, 255, 255), 16, 23, 26, 23, 1.2)
+        if name == "Gold Bar":
+            p.sparkle(40, 12, 4)
+    elif name == "Glass":
+        p.op((170, 220, 245), [(8, 10), (38, 6), (40, 40), (10, 42)], 1.3)
+        p.line((240, 252, 255), 14, 30, 26, 12, 2)
+        p.line((240, 252, 255), 22, 34, 30, 22, 1.4)
+    elif name == "Energy Drink":
+        p.orr((70, 200, 90), 14, 8, 20, 34, 5)
+        p.rect((190, 200, 210), 14, 8, 20, 4, 2)
+        p.op((255, 230, 60), [(26, 14), (18, 27), (24, 27), (20, 38), (30, 23), (24, 23)], 1)
+    elif name == "Treasure Map":
+        p.op((236, 218, 170), [(4, 10), (44, 6), (42, 40), (6, 42)], 1.3)
+        p.path((150, 110, 70), [(10, 34), (16, 26), (24, 30), (30, 20)], 1.4)
+        p.line((220, 50, 50), 30, 12, 38, 20, 2.6)
+        p.line((220, 50, 50), 38, 12, 30, 20, 2.6)
+    elif name == "Campfire":
+        p.ol((110, 70, 40), [(8, 40), (40, 30)], 4)
+        p.ol((110, 70, 40), [(8, 30), (40, 40)], 4)
+        for k, fc in enumerate(((255, 90, 30), (255, 170, 40), (255, 240, 120))):
+            p.oe(fc, 24, 26 - k * 3, 10 - k * 3, 14 - k * 3.5, 0.8 if k == 0 else 0.01)
+    elif name == "Lucky Charm":
+        p.ol((200, 170, 60), [(24, 4), (24, 12)], 1.4)
+        p.oe((245, 240, 235), 24, 26, 8, 13)
+        for a in range(4):
+            x, y = 24 + math.cos(a * 1.57) * 5, 40 + math.sin(a * 1.57) * 4
+            p.oc((70, 180, 80), x, y, 3.6, 0.9)
+        p.sparkle(40, 10, 3.5)
+    elif name == "Fishing Hat":
+        p.oe((120, 150, 90), 24, 32, 21, 7)
+        p.op((140, 170, 104), [(12, 32), (16, 12), (32, 12), (36, 32)], 1.3)
+        p.rect((100, 80, 50), 15, 24, 18, 4)
+        p.path((200, 200, 210), [(32, 14), (38, 20), (35, 24)], 1.4)
+    elif name == "Fossil Amulet":
+        p.path((255, 205, 60), [(8, 6), (24, 22), (40, 6)], 1.6)
+        p.oc((255, 205, 60), 24, 30, 13)
+        p.circle((200, 180, 140), 24, 30, 10)
+        for r in (7, 4):
+            p.circle(OUT, 25, 31, r + 0.6)
+            p.circle((214, 194, 150), 25, 31, r - 0.6)
+    elif name == "Fang Necklace":
+        p.path((140, 100, 60), [(6, 8), (14, 24), (24, 28), (34, 24), (42, 8)], 1.6)
+        for x, y in ((14, 24), (24, 28), (34, 24)):
+            p.op((250, 246, 230), [(x - 3.5, y), (x + 3.5, y), (x, y + 12)], 1)
+    elif name == "Bear Coat":
+        p.op((104, 68, 44), [(14, 6), (34, 6), (44, 18), (40, 44), (8, 44), (4, 18)], 1.3)
+        p.line((70, 44, 30), 24, 10, 24, 44, 1.6)
+        for y in (18, 26, 34):
+            p.oc((230, 200, 120), 27, y, 1.6, 0.6)
+        p.ell((150, 110, 78), 24, 9, 9, 4)
+    elif name == "Sprinkler":
+        p.orr((150, 150, 160), 20, 22, 8, 20, 2)
+        p.oe((190, 196, 206), 24, 20, 10, 4)
+        for a in (-0.9, -0.3, 0.3, 0.9):
+            for d in (10, 16):
+                p.circle((90, 170, 255), 24 + math.sin(a) * d * 1.4, 18 - math.cos(a) * d, 1.8)
+    elif name == "Crystal Lantern":
+        p.ol((90, 90, 100), [(16, 8), (24, 4), (32, 8)], 1.6)
+        p.orr((90, 90, 100), 12, 10, 24, 6, 2)
+        p.orr((180, 240, 255), 14, 16, 20, 22, 3)
+        p.op((120, 230, 255), [(24, 18), (30, 27), (24, 36), (18, 27)], 0.9)
+        p.orr((90, 90, 100), 12, 38, 24, 5, 2)
+        p.sparkle(40, 14, 4, (200, 250, 255))
+    elif name == "Diving Helmet":
+        p.oc((214, 124, 64), 24, 24, 19)
+        p.circle(sh((214, 124, 64), 30), 18, 16, 5)
+        p.oc((150, 210, 245), 24, 26, 10)
+        p.line((240, 252, 255), 19, 30, 25, 19, 2)
+        for a in range(4):
+            p.oc((190, 196, 206), 24 + math.cos(a * 1.57 + 0.78) * 15, 26 + math.sin(a * 1.57 + 0.78) * 15, 2.2, 0.8)
+    else:
+        return False
+    return True
+
+
 def icon(name, cat, col):
     p = Pen(48, 48)
+    if craft_icon(p, name):
+        return p.done(), 24, 24
     if cat == "fish":
         if name == "Old Boot":
             p.op((112, 78, 50), [(12, 8), (24, 8), (24, 28), (40, 32), (40, 40), (10, 40)], 1.3)
@@ -1146,7 +1294,7 @@ def render_map(T, MW, MH, TS):
 PERSON_DIRS = ("down", "up", "left", "right")
 
 
-def build_all(trees, ores, buildings, buyers, items, pets, rarities):
+def build_all(trees, ores, buildings, buyers, items, pets, rarities, extra_icons=()):
     """Return {sprite name: (surface, anchor_x, anchor_y)}."""
     out = {}
     for name, col in trees:
@@ -1181,4 +1329,7 @@ def build_all(trees, ores, buildings, buyers, items, pets, rarities):
         out["pet_" + name] = pet(name, col, rarities.index(rar))
     for name, (cat, col) in items.items():
         out["icon_" + name] = icon(name, cat, col)
+    for name in extra_icons:
+        if "icon_" + name not in out:
+            out["icon_" + name] = icon(name, "extra", (200, 200, 200))
     return out

@@ -66,6 +66,9 @@ def main(extra_out=None):
         "trees": [[t["x"], t["y"], t["t"], t["f"]] for t in game.trees],
         "forests": V.FORESTS,
         "ancientRegrow": V.ANCIENT_REGROW,
+        "crafts": V.CRAFTS,
+        "charms": V.CHARMS,
+        "craftTabs": V.CRAFT_TABS,
         "ores": [[o["x"], o["y"], o["o"]] for o in game.ores],
     }
     with open(os.path.join(HERE, "web", "template.html"), encoding="utf-8") as fh:

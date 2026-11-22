@@ -269,10 +269,10 @@ PLOT_PRICES = [150, 300, 600, 1200, 2500, 5000]
 BUYERS = [("Lumber Larry", "wood", (150, 100, 60)), ("Digger Dot", "dig", (200, 160, 90)),
           ("Miner Mo", "ore", (120, 120, 140)), ("Hungry Hank", "food", (220, 120, 80)),
           ("Fishmonger Fiona", "fish", (80, 160, 200)), ("Farmer Fran", "crop", (120, 190, 80)),
-          ("Trapper Tom", "animal", (140, 90, 60))]
-CAT_ORDER = ["fish", "wood", "ore", "dig", "animal", "crop", "food", "misc"]
+          ("Trapper Tom", "animal", (140, 90, 60)), ("Builder Bea", "craft", (240, 160, 60))]
+CAT_ORDER = ["fish", "wood", "ore", "dig", "animal", "crop", "food", "craft", "misc"]
 CATS = [("All", None), ("Fish", "fish"), ("Wood", "wood"), ("Ore", "ore"), ("Dig", "dig"), ("Animal", "animal"),
-        ("Crop", "crop"), ("Food", "food"), ("Misc", "misc")]
+        ("Crop", "crop"), ("Food", "food"), ("Craft", "craft"), ("Misc", "misc")]
 # description, stat, amount, coins, gems, target
 QUESTS = [
     ("Catch a fish! Aim at water, HOLD F, let go", "fish", 1, 50, 5, "river"),
@@ -287,6 +287,7 @@ QUESTS = [
     ("Mine 5 ores in the CAVE (north-east)", "ores", 5, 150, 15, "cave"),
     ("Finish an order for a town NPC", "orders", 1, 150, 15, None),
     ("Open your RESTAURANT & serve a diner", "served", 1, 300, 25, "cook"),
+    ("Craft something: press C (or the CRAFT button)", "crafted", 1, 100, 10, None),
 ]
 BUILDINGS = [("HOME", "home", 60, 43, 5, 4, (180, 90, 70)), ("SHOP", "shop", 66, 43, 5, 4, (70, 130, 200)),
              ("MARKET", "market", 76, 43, 5, 4, (220, 170, 60)), ("UPGRADES", "skills", 82, 43, 5, 4, (130, 90, 200)),
@@ -343,6 +344,58 @@ for _r in RECIPES:
 reg("Bandage", "misc", 10, "Common", (240, 240, 240), heal=40)
 reg("Water Bottle", "misc", 5, "Common", (120, 190, 255), thirst=50)
 reg("Snack Bar", "misc", 8, "Common", (200, 150, 90), hunger=30)
+reg("Energy Drink", "misc", 30, "Uncommon", (70, 200, 90), thirst=25)
+for _n, _b, _r in (("Plank", 6, "Common"), ("Rope", 8, "Common"), ("Glass", 18, "Common"), ("Leather", 40, "Uncommon"),
+                   ("Copper Bar", 38, "Uncommon"), ("Iron Bar", 72, "Uncommon"), ("Gold Bar", 190, "Rare")):
+    reg(_n, "craft", _b, _r, (200, 170, 120))
+for _n in ("Seaweed", "Wheat"):
+    ITEMS[_n]["tags"].add("fiber")
+for _n in ("Pebble", "Stone"):
+    ITEMS[_n]["tags"].add("stone")
+
+# Crafting. Ingredients use the same rules as cooking (an item name, or a tag like "wood" = any log).
+# result: ("item", name, count) | ("tool", kind, tier) | ("charm", id) | ("action", id)
+CHARMS = {"lucky_charm": ("Lucky Charm", "+15% ALL luck"), "fishing_hat": ("Fishing Hat", "+20% fishing luck"),
+          "fossil_amulet": ("Fossil Amulet", "+25% dig luck"), "fang_necklace": ("Fang Necklace", "+25% hunting damage"),
+          "bear_coat": ("Bear Coat", "Hunger & thirst drain 25% slower"), "sprinkler": ("Sprinkler", "Crops grow 25% faster"),
+          "lantern": ("Crystal Lantern", "See much farther at night & in caves"),
+          "diving_helmet": ("Diving Helmet", "+50% oxygen underwater")}
+CRAFT_TABS = ["Materials", "Tools", "Charms", "Survival"]
+CRAFTS = [
+    ("Plank", [("wood", 1)], "Materials", ("item", "Plank", 2), "Saw any log into 2 planks"),
+    ("Rope", [("fiber", 2)], "Materials", ("item", "Rope", 1), "Twist seaweed or wheat into rope"),
+    ("Leather", [("Hide", 2)], "Materials", ("item", "Leather", 1), "Tan 2 hides"),
+    ("Glass", [("stone", 3), ("Coal", 1)], "Materials", ("item", "Glass", 1), "Melt pebbles or stone"),
+    ("Copper Bar", [("Copper Ore", 2), ("Coal", 1)], "Materials", ("item", "Copper Bar", 1), "Smelt copper ore"),
+    ("Iron Bar", [("Iron Ore", 2), ("Coal", 1)], "Materials", ("item", "Iron Bar", 1), "Smelt iron ore"),
+    ("Gold Bar", [("Gold Ore", 2), ("Coal", 1)], "Materials", ("item", "Gold Bar", 1), "Smelt gold ore"),
+    ("Copper Axe", [("Copper Bar", 2), ("Plank", 2)], "Tools", ("tool", "axe", 1), "Chop power 2"),
+    ("Copper Pickaxe", [("Copper Bar", 2), ("Plank", 2)], "Tools", ("tool", "pick", 1), "Mine power 2, Copper tier"),
+    ("Iron Axe", [("Iron Bar", 3), ("Plank", 2)], "Tools", ("tool", "axe", 2), "Chop power 3.5"),
+    ("Iron Pickaxe", [("Iron Bar", 3), ("Plank", 2)], "Tools", ("tool", "pick", 2), "Mine power 3.5, Iron tier"),
+    ("Iron Shovel", [("Iron Bar", 2), ("Plank", 2)], "Tools", ("tool", "shovel", 1), "Digs 1.6x faster"),
+    ("Stone Spear", [("stone", 3), ("Plank", 1), ("Rope", 1)], "Tools", ("tool", "weapon", 1), "Damage 18"),
+    ("Hunting Bow", [("Plank", 3), ("Rope", 2), ("Arrowhead", 2)], "Tools", ("tool", "weapon", 2), "Damage 30, shoots far"),
+    ("Bamboo Rod", [("Plank", 2), ("Rope", 2)], "Tools", ("tool", "rod", 1), "Fishing luck +15%"),
+    ("Fiberglass Rod", [("Glass", 2), ("Rope", 2), ("Plank", 2)], "Tools", ("tool", "rod", 2), "Fishing luck +35%"),
+    ("Satchel", [("Leather", 3), ("Rope", 1)], "Tools", ("tool", "bag", 1), "Backpack holds 50"),
+    ("Rucksack", [("Leather", 6), ("Rope", 2), ("Iron Bar", 1)], "Tools", ("tool", "bag", 2), "Backpack holds 100"),
+    ("Lucky Charm", [("Rabbit Foot", 1), ("Silver Ring", 1), ("Rope", 1)], "Charms", ("charm", "lucky_charm"), ""),
+    ("Fishing Hat", [("Leather", 2), ("Fish Scales", 5)], "Charms", ("charm", "fishing_hat"), ""),
+    ("Fossil Amulet", [("Fossil", 1), ("Gold Bar", 1)], "Charms", ("charm", "fossil_amulet"), ""),
+    ("Fang Necklace", [("Wolf Fang", 2), ("Rope", 1)], "Charms", ("charm", "fang_necklace"), ""),
+    ("Bear Coat", [("Bear Pelt", 1), ("Leather", 2)], "Charms", ("charm", "bear_coat"), ""),
+    ("Sprinkler", [("Iron Bar", 2), ("Glass", 1), ("Plank", 2)], "Charms", ("charm", "sprinkler"), ""),
+    ("Crystal Lantern", [("Crystal", 2), ("Glass", 1), ("Iron Bar", 1)], "Charms", ("charm", "lantern"), ""),
+    ("Diving Helmet", [("Glass", 2), ("Copper Bar", 2), ("Leather", 1)], "Charms", ("charm", "diving_helmet"), ""),
+    ("Bandage", [("Leather", 1)], "Survival", ("item", "Bandage", 3), "3 bandages (+40 health each)"),
+    ("Water Bottle", [("Glass", 1)], "Survival", ("item", "Water Bottle", 2), "2 bottles (+50 water each)"),
+    ("Snack Bar", [("Wheat", 2), ("Berry", 1)], "Survival", ("item", "Snack Bar", 2), "2 snack bars (+30 food each)"),
+    ("Worm", [("Dirt", 4)], "Survival", ("item", "Worm", 3), "Dig through dirt for 3 bait worms"),
+    ("Energy Drink", [("Berry", 2), ("Water Bottle", 1)], "Survival", ("item", "Energy Drink", 1), "Drink it: run 1.5x faster for 3 min"),
+    ("Treasure Map", [("Old Bottle", 1), ("Pirate Coin", 1)], "Survival", ("action", "map"), "Marks 3 treasure spots near you"),
+    ("Campfire", [("wood", 3)], "Survival", ("action", "fire"), "Build a campfire here to cook"),
+]
 
 
 def matches(s, spec):
@@ -408,7 +461,7 @@ class Game:
         self.spr = art.build_all([(t[0], t[3]) for t in TREES], [(o[0], o[1], o[4]) for o in ORES],
                                  [(b[0], b[6], b[4], b[5]) for b in BUILDINGS], BUYERS,
                                  {n: (d['cat'], d['color']) for n, d in ITEMS.items()},
-                                 [(q[0], q[1], q[2]) for q in PETS], RAR)
+                                 [(q[0], q[1], q[2]) for q in PETS], RAR, [c[0] for c in CRAFTS])
         self._scaled = {}
         self.sell_dlg = None
         self.waypoint = None
@@ -518,22 +571,22 @@ class Game:
         return tot
 
     def luck_all(self):
-        return self.pb("all_luck") + (1.0 if self.boosts["luck"] > 0 else 0)
+        return self.pb("all_luck") + (1.0 if self.boosts["luck"] > 0 else 0) + (0.15 if "lucky_charm" in self.charms else 0)
 
     def fish_luck(self):
         return (RODS[self.tools["rod"]][3] + 0.2 * self.has("fish1") + 0.6 * self.has("fish4")
-                + self.pb("fish_luck") + self.luck_all())
+                + self.pb("fish_luck") + self.luck_all() + (0.2 if "fishing_hat" in self.charms else 0))
 
     def dig_luck(self):
         return (SHOVELS[self.tools["shovel"]][4] + 0.3 * self.has("dig2") + 0.8 * self.has("dig4")
-                + self.pb("dig_luck") + self.luck_all())
+                + self.pb("dig_luck") + self.luck_all() + (0.25 if "fossil_amulet" in self.charms else 0))
 
     def sell_mult(self):
         m = (1 + self.pb("sell")) * (1.5 if self.vip else 1) * (1.25 if self.has("surv4") else 1)
         return m * (2 if self.boosts["coins"] > 0 else 1)
 
     def oxy_mult(self):
-        return (2 if self.has("surv2") else 1) * (1 + self.pb("oxygen"))
+        return (2 if self.has("surv2") else 1) * (1 + self.pb("oxygen")) * (1.5 if "diving_helmet" in self.charms else 1)
 
     def bag_cap(self):
         return BAGS[self.tools["bag"]][3]
@@ -819,14 +872,14 @@ class Game:
         self.coins, self.gems, self.level, self.xp = 50, 25, 1, 0.0
         self.bag, self.chest, self.chest_cap = [], [], 100
         self.tools = dict(rod=0, axe=0, pick=0, shovel=0, weapon=0, bag=0)
-        self.skills, self.discovered = set(), set()
+        self.skills, self.discovered, self.charms = set(), set(), set()
         self.pets, self.equipped, self.pet_slots = [], [], 1
         self.seeds = {"Carrot": 5, "Wheat": 3}
         self.plots = [dict(crop=None, prog=0.0) for _ in range(12)]
         self.plots_unlocked = 6
         self.stats = {}
         self.quest_i, self.quest_base, self.rq = 0, 0, None
-        self.boosts = {"luck": 0.0, "coins": 0.0}
+        self.boosts = {"luck": 0.0, "coins": 0.0, "speed": 0.0}
         self.vip = self.starter_bought = self.restaurant = False
         self.tod, self.day, self.last_daily, self.streak, self.sel_seed = 0.28, 1, "", 0, 0
         self.facing = (0, 1)
@@ -834,6 +887,7 @@ class Game:
     def save(self):
         d = {k: getattr(self, k) for k in self.PERSIST}
         d["skills"] = sorted(self.skills)
+        d["charms"] = sorted(self.charms)
         d["discovered"] = sorted(self.discovered)
         try:
             with open(SAVE_FILE, "w") as fh:
@@ -851,6 +905,8 @@ class Game:
                 if k in d:
                     setattr(self, k, d[k])
             self.skills = set(d.get("skills", []))
+            self.charms = set(d.get("charms", []))
+            self.boosts.setdefault("speed", 0.0)
             self.discovered = set(d.get("discovered", []))
             self.bag = [s for s in self.bag if s["name"] in ITEMS]
             self.chest = [s for s in self.chest if s["name"] in ITEMS]
@@ -891,7 +947,7 @@ class Game:
                                    "HOLD Q - dig up treasure (or dive for loot in deep water)",
                                    "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear",
                                    "R - eat best food",
-                                   "B - build campfire (3 logs, cook anywhere)   Z - change seed",
+                                   "C - CRAFTING (tools, charms, materials)   B - campfire   Z - change seed",
                                    "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
                                    "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"],
                    [("LET'S GO!", None, GREEN)], CYAN)
@@ -1126,7 +1182,7 @@ class Game:
         self.swing = 0.22
         ln = dist(a["x"], a["y"], self.px, self.py) or 1
         self.facing = ((a["x"] - self.px) / ln, (a["y"] - self.py) / ln)
-        dmg = (6 + AXES[self.tools["axe"]][3] * 4) * (1.5 if self.has("wood1") else 1)
+        dmg = (6 + AXES[self.tools["axe"]][3] * 4) * (1.5 if self.has("wood1") else 1) * (1.25 if "fang_necklace" in self.charms else 1)
         a["hp"] -= dmg
         a["flash"] = 0.2
         self.float_text(a["x"], a["y"] - 25, f"-{int(dmg)}", ORANGE, 24)
@@ -1459,7 +1515,7 @@ class Game:
 
     def grow_mult(self):
         return ((1.3 if self.has("farm1") else 1) * (2 if self.has("farm4") else 1) * (1 + self.pb("grow"))
-                * (1.5 if self.rain > 0 else 1))
+                * (1.5 if self.rain > 0 else 1) * (1.25 if "sprinkler" in self.charms else 1))
 
     # ------------------------------------------------------------ hunting
     def attack(self):
@@ -1469,7 +1525,7 @@ class Game:
         mx, my = self.mouse_world()
         a = math.atan2(my - self.py, mx - self.px)
         self.projs.append(dict(x=self.px, y=self.py - 6, vx=math.cos(a) * wpn[4], vy=math.sin(a) * wpn[4], life=0.8,
-                               dmg=wpn[3] * (1 + self.pb("hunt")), a=a))
+                               dmg=wpn[3] * (1 + self.pb("hunt")) * (1.25 if "fang_necklace" in self.charms else 1), a=a))
         self.atk_cd = wpn[5] * (0.7 if self.has("hunt1") else 1)
 
     def spawn_animal(self):
@@ -1736,6 +1792,94 @@ class Game:
                 return False
         return True
 
+    def craft_blocked(self, r):
+        """Why this recipe can't be made right now, or '' if it can (ignoring ingredients)."""
+        res = r[3]
+        if res[0] == "tool" and self.tools[res[1]] >= res[2]:
+            return "HAVE IT" if self.tools[res[1]] == res[2] else "HAVE BETTER"
+        if res[0] == "charm" and res[1] in self.charms:
+            return "OWNED"
+        return ""
+
+    def craft(self, r, times=1):
+        name, ings, tab, res, desc = r
+        made, total = 0, 0.0
+        for _ in range(times):
+            if self.craft_blocked(r) or not self.plan(r):
+                break
+            val = sum(self.take(spec, k) or 0 for spec, k in sorted(ings, key=lambda sp: sp[0] in GENERIC))
+            if res[0] == "item":
+                v = max(ITEMS[res[1]]["base"], val * 1.2 / res[2])
+                self.add_item(res[1], v, count=res[2])
+                total += v * res[2]
+            elif res[0] == "tool":
+                self.tools[res[1]] = res[2]
+                self.do_banner("CRAFTED!", f"{name} equipped", CYAN)
+            elif res[0] == "charm":
+                self.charms.add(res[1])
+                self.do_banner("CHARM CRAFTED!", f"{name}: {CHARMS[res[1]][1]} (forever)", PURPLE)
+            elif res[1] == "fire":
+                self.campfires.append([self.px, self.py + 20, 240.0])
+            elif res[1] == "map":
+                for _ in range(3):
+                    for _try in range(60):
+                        x, y = int(self.px // TS) + random.randint(-12, 12), int(self.py // TS) + random.randint(-12, 12)
+                        if 0 <= x < MW and 0 <= y < MH and self.tiles[y][x] in (GRASS, SAND) and (x, y) not in self.blocked:
+                            self.sparkles.add((x, y))
+                            break
+                self.do_banner("TREASURE MAP!", "3 sparkle spots appeared near you - dig them!", GOLD)
+            made += 1
+        if made:
+            self.inc("crafted", made)
+            self.gain_xp(5 * made)
+            self.burst(self.px, self.py, (255, 200, 120), 14, 140)
+            if res[0] == "item":
+                self.note(f"Crafted {made * res[2]}x {res[1]}! (worth {fmt(total)}c)", GREEN)
+            elif res[0] == "action":
+                self.note(f"Made {name}!", GREEN)
+            self.menu = None if res[0] == "action" else self.menu
+
+    def menu_craft(self):
+        x, y, w, h = self.panel("CRAFTING")
+        self.tabs(x + 20, y + 66, CRAFT_TABS, 150)
+        tab = CRAFT_TABS[self.tab]
+        rows = [r for r in CRAFTS if r[2] == tab]
+        rows.sort(key=lambda r: (bool(self.craft_blocked(r)), not self.plan(r)))
+        per = 8
+        maxs = max(0, len(rows) - per)
+        st = min(self.scroll, maxs)
+        for i, r in enumerate(rows[st:st + per]):
+            name, ings, _, res, desc = r
+            ry = y + 112 + i * 60
+            blocked = self.craft_blocked(r)
+            ok = not blocked and self.plan(r)
+            pygame.draw.rect(self.screen, PANEL2 if ok else (40, 42, 54), (x + 20, ry, w - 40, 54), border_radius=10)
+            self.icon(res[1] if res[0] == "item" else name, x + 48, ry + 27, 42)
+            if res[0] == "item" and res[2] > 1:
+                self.text(f"x{res[2]}", (x + 66, ry + 36), 18, WHITE)
+            self.text(name, (x + 82, ry + 6), 25, WHITE if ok else GREY)
+            self.text(CHARMS[res[1]][1] if res[0] == "charm" else desc, (x + 82, ry + 32), 18, (190, 200, 225))
+            cx = x + 430
+            for spec, n in ings:
+                have = self.have(spec)
+                label = {"wood": "any log", "fiber": "seaweed/wheat", "stone": "pebble/stone"}.get(spec, spec)
+                cx = self.text(f"{n} {label} ({have})", (cx, ry + 18), 19, GREEN if have >= n else RED).right + 14
+            if blocked:
+                self.button((x + w - 196, ry + 9, 170, 36), blocked, None, (40, 120, 70), False, 21)
+            else:
+                self.button((x + w - 196, ry + 9, 100, 36), "CRAFT", lambda r=r: self.craft(r), (210, 140, 60), ok, 22)
+                if res[0] == "item":
+                    self.button((x + w - 88, ry + 9, 62, 36), "MAX", lambda r=r: self.craft(r, 99), (60, 170, 190), ok, 21)
+        if maxs:
+            if st > 0:
+                self.button((x + 20, y + h - 52, 44, 34), "^", lambda: setattr(self, "scroll", max(0, self.scroll - 1)), PANEL3)
+            if st < maxs:
+                self.button((x + 70, y + h - 52, 44, 34), "v", lambda: setattr(self, "scroll", min(maxs, self.scroll + 1)), PANEL3)
+        if tab == "Charms":
+            self.text(f"Charms work forever once crafted. You have {len(self.charms)}/{len(CHARMS)}.", (x + w - 24, y + h - 40), 20, GOLD, "tr")
+        else:
+            self.text("Tip: sell crafted materials for more than the raw stuff, or to Builder Bea.", (x + w - 24, y + h - 40), 20, GREY, "tr")
+
     def food_value(self, r, val, q):
         return (val * 1.3 + 15 + r[5] * 0.5) * QMULT[q] * (1.25 if self.has("cook1") else 1) * (2 if self.has("cook4") else 1)
 
@@ -1810,6 +1954,9 @@ class Game:
         self.food = min(100, self.food + it["hunger"] * (0.6 + 0.4 * qm))
         self.water = min(100, self.water + it["thirst"])
         self.hp = clamp(self.hp + it["heal"] * (0.6 + 0.4 * qm), 1, 100)
+        if s["name"] == "Energy Drink":
+            self.boosts["speed"] = self.boosts.get("speed", 0) + 180
+            self.note("Energy Drink! You run 1.5x faster for 3 minutes", GREEN)
         s["count"] -= 1
         if s["count"] <= 0:
             self.bag.remove(s)
@@ -2074,7 +2221,7 @@ class Game:
                                [("Resume", None, GREEN), ("Help", self.show_help, PANEL3),
                                 ("Save & Quit", self.quit, RED)], CYAN)
                 return
-            toggles = {pygame.K_TAB: "inv", pygame.K_g: "gems", pygame.K_k: "skills", pygame.K_p: "pets"}
+            toggles = {pygame.K_TAB: "inv", pygame.K_g: "gems", pygame.K_k: "skills", pygame.K_p: "pets", pygame.K_c: "craft"}
             if k in toggles:
                 m = toggles[k]
                 if self.menu == m or (m == "inv" and self.menu == "home"):
@@ -2147,7 +2294,7 @@ class Game:
                 dx, dy = dx / ln, dy / ln
                 self.facing = (dx, dy)
                 sprint = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
-                spd = 150 * (1 + self.pb("speed")) * (1.55 if sprint else 1)
+                spd = 150 * (1 + self.pb("speed")) * (1.55 if sprint else 1) * (1.5 if self.boosts.get("speed", 0) > 0 else 1)
                 spd *= 0.55 if tile == DEEP else 0.75 if tile == SHALLOW else 1
                 nx = self.px + dx * spd * dt
                 if self.can_walk(nx, self.py):
@@ -2162,7 +2309,7 @@ class Game:
                     self.food -= dt * 0.15
         # survival
         if not busy:
-            drain = (0.7 if self.has("surv1") else 1) * (1 - min(0.8, self.pb("hunger")))
+            drain = (0.7 if self.has("surv1") else 1) * (1 - min(0.8, self.pb("hunger"))) * (0.75 if "bear_coat" in self.charms else 1)
             self.food = max(0.0, self.food - 100 / 420 * dt * drain)
             self.water = max(0.0, self.water - 100 / 300 * dt * drain)
             if tile == DEEP:
@@ -2393,13 +2540,13 @@ class Game:
             self.draw_fishing_world()
         # lighting
         inside_cave = self.tile_at(self.px, self.py) in (CAVE, WALL) and not self.title
-        a = 205 if inside_cave else self.darkness()
+        a = (150 if "lantern" in self.charms else 205) if inside_cave else self.darkness()
         if self.rain > 0:
             a = max(a, 60)
         if a > 0:
             dark = pygame.Surface((W, H), pygame.SRCALPHA)
             dark.fill((8, 8, 30, int(a)))
-            lights = [] if self.title else [(*self.w2s(self.px, self.py), 170)]
+            lights = [] if self.title else [(*self.w2s(self.px, self.py), 290 if "lantern" in self.charms else 170)]
             lights += [(*self.w2s(c[0], c[1]), 150) for c in self.campfires]
             for b in self.buildings:
                 lights.append((*self.w2s(*b["door"]), 70))
@@ -2745,7 +2892,8 @@ class Game:
         # menu buttons
         bx = W - 16
         for label, m, col in (("HELP [H]", None, PANEL3), ("GEMS [G]", "gems", PINK), ("PETS [P]", "pets", (200, 110, 170)),
-                              ("UPGRADES [K]", "skills", PURPLE), ("BAG [TAB]", "inv", (70, 140, 200))):
+                              ("UPGRADES [K]", "skills", PURPLE), ("CRAFT [C]", "craft", (210, 140, 60)),
+                              ("BAG [TAB]", "inv", (70, 140, 200))):
             w = self.font(20).size(label)[0] + 20
             cb = self.show_help if m is None else (lambda m=m: self.open_menu(m))
             self.button((bx - w, 86, w, 30), label, cb, col, size=20)
@@ -2958,7 +3106,7 @@ class Game:
     def menu_market(self):
         x, y, w, h = self.panel("MARKET")
         m = self.sell_mult()
-        self.tabs(x + 20, y + 66, [c[0] for c in CATS], 106)
+        self.tabs(x + 20, y + 66, [c[0] for c in CATS], 96)
         cat = CATS[self.tab][1]
         items = [s for s in self.bag if cat is None or ITEMS[s["name"]]["cat"] == cat]
         items.sort(key=lambda s: (CAT_ORDER.index(ITEMS[s["name"]]["cat"]), s["name"], -s["value"]))
@@ -3057,7 +3205,7 @@ class Game:
 
     def menu_inv(self, chest=False):
         x, y, w, h = self.panel("HOME - STORAGE" if chest else "BACKPACK")
-        self.tabs(x + 20, y + 66, [c[0] for c in CATS], 106)
+        self.tabs(x + 20, y + 66, [c[0] for c in CATS], 96)
         if self.tab != self.inv_filter:
             self.inv_filter = self.tab
         cat = CATS[self.tab][1]

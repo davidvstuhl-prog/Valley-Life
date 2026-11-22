@@ -55,7 +55,7 @@ const WORLD = /*__WORLD__*/null;
 const FRAMES = /*__FRAMES__*/null;
 const ATLAS = new Image(); ATLAS.src = "__ATLAS__";
 const MAP_IMG = new Image(); MAP_IMG.src = "__MAP__";
-const CAT_ORDER = ["fish","wood","ore","dig","animal","crop","food","misc"];
+const CAT_ORDER = ["fish","wood","ore","dig","animal","crop","food","craft","misc"];
 const LOG_BARK = {Oak: [124,84,50], Pine: [88,54,36], Birch: [238,234,224], Maple: [170,70,44], Ancient: [224,172,52]};
 const WHITE = [255,255,255], BLACK = [0,0,0], GREY = [150,150,160];
 const PANEL = [30,34,50], PANEL2 = [44,50,72], PANEL3 = [66,74,104];
@@ -195,8 +195,8 @@ const GEM_ITEMS = [["luck","2x Luck Potion","10 minutes of double luck",50],["co
 const SUPPLIES = [["Bandage",30,1,"Heals 40 health"],["Water Bottle",15,1,"+50 water"],["Snack Bar",25,1,"+30 food"],["Worm",20,5,"5 worms = fishing bait (+luck)"]];
 const PLOT_PRICES = [150,300,600,1200,2500,5000];
 const BUYERS = [["Lumber Larry","wood",[150,100,60]],["Digger Dot","dig",[200,160,90]],["Miner Mo","ore",[120,120,140]],["Hungry Hank","food",[220,120,80]],
-  ["Fishmonger Fiona","fish",[80,160,200]],["Farmer Fran","crop",[120,190,80]],["Trapper Tom","animal",[140,90,60]]];
-const CATS = [["All",null],["Fish","fish"],["Wood","wood"],["Ore","ore"],["Dig","dig"],["Animal","animal"],["Crop","crop"],["Food","food"],["Misc","misc"]];
+  ["Fishmonger Fiona","fish",[80,160,200]],["Farmer Fran","crop",[120,190,80]],["Trapper Tom","animal",[140,90,60]],["Builder Bea","craft",[240,160,60]]];
+const CATS = [["All",null],["Fish","fish"],["Wood","wood"],["Ore","ore"],["Dig","dig"],["Animal","animal"],["Crop","crop"],["Food","food"],["Craft","craft"],["Misc","misc"]];
 const QUESTS = [
   ["Catch a fish! Aim at water, HOLD F, let go","fish",1,50,5,"river"],["Chop 5 logs: press E at a tree on the GREEN","logs",5,60,5,"forest"],
   ["Dig up 3 things: HOLD Q on grass","digs",3,60,5,null],["Sell your stuff at the MARKET","sold",1,50,5,"market"],
@@ -204,6 +204,7 @@ const QUESTS = [
   ["Cook a meal at the KITCHEN","cooked",1,80,10,"cook"],["Buy an upgrade at the UPGRADES hall","skills",1,100,10,"skills"],
   ["Hatch a pet at the PET HATCHERY","hatched",1,100,15,"pets"],["Mine 5 ores in the CAVE (north-east)","ores",5,150,15,"cave"],
   ["Finish an order for a town NPC","orders",1,150,15,null],["Open your RESTAURANT & serve a diner","served",1,300,25,"cook"],
+  ["Craft something: press C (or the CRAFT button)","crafted",1,100,10,null],
 ];
 const TOUCH_QUEST = {0:"Catch a fish! Stand by water, HOLD the FISH button, let go", 1:"Chop 5 logs: tap USE at a tree on the GREEN",
   2:"Dig up 3 things: HOLD the DIG button on grass", 4:"Plant a seed: tap USE on a garden plot", 5:"Hunt an animal: tap HUNT, or USE up close for your axe"};
@@ -234,6 +235,13 @@ reg("Wolf Fang","animal",70,"Rare",[230,230,240]); reg("Bear Pelt","animal",250,
 for (const c of CROPS) reg(c[0],"crop",c[3],c[8],c[4],["veg"],c[6],c[7]);
 for (const r of RECIPES) reg(r[0],"food",r[5],"Uncommon",r[6],["cooked"],r[2],r[3],r[4]);
 reg("Bandage","misc",10,"Common",[240,240,240],[],0,0,40); reg("Water Bottle","misc",5,"Common",[120,190,255],[],0,50); reg("Snack Bar","misc",8,"Common",[200,150,90],[],30);
+reg("Energy Drink","misc",30,"Uncommon",[70,200,90],[],0,25);
+for (const [n, b, r] of [["Plank",6,"Common"],["Rope",8,"Common"],["Glass",18,"Common"],["Leather",40,"Uncommon"],["Copper Bar",38,"Uncommon"],["Iron Bar",72,"Uncommon"],["Gold Bar",190,"Rare"]]) reg(n, "craft", b, r, [200,170,120]);
+for (const n of ["Seaweed","Wheat"]) ITEMS[n].tags.add("fiber");
+for (const n of ["Pebble","Stone"]) ITEMS[n].tags.add("stone");
+// Crafting recipes come from the Python game (CRAFTS in valley_life.py) via build_web.py.
+const CRAFTS = WORLD.crafts, CHARMS = WORLD.charms, CRAFT_TABS = WORLD.craftTabs;
+const SPEC_LABEL = {wood: "any log", fiber: "seaweed/wheat", stone: "pebble/stone"};
 
 function makeNoise(w, h, scale, seed) {
   const r = makeRng(seed * 7919 + 13);
@@ -314,11 +322,11 @@ class Game {
   has(s) { return this.skills.has(s); }
   hn(s) { return this.skills.has(s) ? 1 : 0; }
   pb(k) { let t = 0; for (const i of this.equipped) { const n = this.pets[i]; if (n && PET[n][3] === k) t += PET[n][4]; } return t; }
-  luckAll() { return this.pb("all_luck") + (this.boosts.luck > 0 ? 1 : 0); }
-  fishLuck() { return RODS[this.tools.rod][3] + 0.2*this.hn("fish1") + 0.6*this.hn("fish4") + this.pb("fish_luck") + this.luckAll(); }
-  digLuck() { return SHOVELS[this.tools.shovel][4] + 0.3*this.hn("dig2") + 0.8*this.hn("dig4") + this.pb("dig_luck") + this.luckAll(); }
+  luckAll() { return this.pb("all_luck") + (this.boosts.luck > 0 ? 1 : 0) + (this.charms.has("lucky_charm") ? 0.15 : 0); }
+  fishLuck() { return RODS[this.tools.rod][3] + 0.2*this.hn("fish1") + 0.6*this.hn("fish4") + this.pb("fish_luck") + this.luckAll() + (this.charms.has("fishing_hat") ? 0.2 : 0); }
+  digLuck() { return SHOVELS[this.tools.shovel][4] + 0.3*this.hn("dig2") + 0.8*this.hn("dig4") + this.pb("dig_luck") + this.luckAll() + (this.charms.has("fossil_amulet") ? 0.25 : 0); }
   sellMult() { return (1 + this.pb("sell")) * (this.vip ? 1.5 : 1) * (this.has("surv4") ? 1.25 : 1) * (this.boosts.coins > 0 ? 2 : 1); }
-  oxyMult() { return (this.has("surv2") ? 2 : 1)*(1 + this.pb("oxygen")); }
+  oxyMult() { return (this.has("surv2") ? 2 : 1)*(1 + this.pb("oxygen"))*(this.charms.has("diving_helmet") ? 1.5 : 1); }
   bagCap() { return BAGS[this.tools.bag][3]; }
   count(lst) { let n = 0; for (const s of lst) n += s.count; return n; }
   rollRarity(luck, av=[0,1,2,3,4,5]) { return choices(av, av.map(i => RW[i]*(1 + luck*i*0.6))); }
@@ -400,19 +408,19 @@ class Game {
   reset() {
     [this.px, this.py] = this.spawn; this.hp = this.food = this.water = this.oxy = 100;
     this.coins = 50; this.gems = 25; this.level = 1; this.xp = 0; this.bag = []; this.chest = []; this.chestCap = 100;
-    this.tools = {rod:0, axe:0, pick:0, shovel:0, weapon:0, bag:0}; this.skills = new Set(); this.discovered = new Set();
+    this.tools = {rod:0, axe:0, pick:0, shovel:0, weapon:0, bag:0}; this.skills = new Set(); this.discovered = new Set(); this.charms = new Set();
     this.pets = []; this.equipped = []; this.petSlots = 1; this.seeds = {Carrot: 5, Wheat: 3};
     this.plots = Array.from({length: 12}, () => ({crop: null, prog: 0})); this.plotsUnlocked = 6;
-    this.stats = {}; this.questI = 0; this.questBase = 0; this.rq = null; this.boosts = {luck: 0, coins: 0};
+    this.stats = {}; this.questI = 0; this.questBase = 0; this.rq = null; this.boosts = {luck: 0, coins: 0, speed: 0};
     this.vip = false; this.starterBought = false; this.restaurant = false;
     this.tod = 0.28; this.day = 1; this.lastDaily = ""; this.streak = 0; this.selSeed = 0; this.facing = [0, 1];
   }
   static PERSIST = ["px","py","hp","food","water","oxy","coins","gems","level","xp","bag","chest","chestCap","tools","pets","equipped","petSlots","seeds","plots","plotsUnlocked","stats","questI","questBase","rq","boosts","vip","starterBought","restaurant","tod","day","lastDaily","streak","selSeed"];
-  save() { const d = {}; for (const k of Game.PERSIST) d[k] = this[k]; d.skills = [...this.skills]; d.discovered = [...this.discovered]; lsSet(SAVE_KEY, JSON.stringify(d)); }
+  save() { const d = {}; for (const k of Game.PERSIST) d[k] = this[k]; d.skills = [...this.skills]; d.discovered = [...this.discovered]; d.charms = [...this.charms]; lsSet(SAVE_KEY, JSON.stringify(d)); }
   load() {
     const raw = lsGet(SAVE_KEY); if (!raw) return false;
     try { const d = JSON.parse(raw); for (const k of Game.PERSIST) if (k in d) this[k] = d[k];
-      this.skills = new Set(d.skills || []); this.discovered = new Set(d.discovered || []);
+      this.skills = new Set(d.skills || []); this.discovered = new Set(d.discovered || []); this.charms = new Set(d.charms || []); if (this.boosts.speed === undefined) this.boosts.speed = 0;
       this.bag = this.bag.filter(s => ITEMS[s.name]); this.chest = this.chest.filter(s => ITEMS[s.name]); return true;
     } catch (e) { this.reset(); return false; }
   }
@@ -447,7 +455,7 @@ class Game {
       "WASD / Arrows - walk      SHIFT - sprint", "E - use stuff: chop tree, mine rock, plant/harvest, drink, talk, enter",
       "HOLD F, aim with mouse, let go - cast rod.  Press F/SPACE on the  !", "Reeling: HOLD SPACE or mouse - keep the fish in the green box",
       "HOLD Q - dig up treasure (or dive for loot in deep water)", "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear", "R - eat best food",
-      "B - build campfire (3 logs, cook anywhere)   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
+      "C - CRAFTING (tools, charms, materials)   B - campfire   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
       "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"];
     this.popup("HOW TO PLAY", lines, [["LET'S GO!", null, GREEN]], CYAN);
   }
@@ -524,7 +532,7 @@ class Game {
   axeHit(a) {
     if (this.axeCd > 0) return; this.axeCd = 0.45; this.swing = 0.22;
     const ln = dist(a.x, a.y, this.px, this.py) || 1; this.facing = [(a.x - this.px)/ln, (a.y - this.py)/ln];
-    const dmg = (6 + AXES[this.tools.axe][3]*4)*(this.has("wood1") ? 1.5 : 1);
+    const dmg = (6 + AXES[this.tools.axe][3]*4)*(this.has("wood1") ? 1.5 : 1)*(this.charms.has("fang_necklace") ? 1.25 : 1);
     a.hp -= dmg; a.flash = 0.2; this.floatText(a.x, a.y-25, `-${Math.floor(dmg)}`, ORANGE, 24); this.burst(a.x, a.y, [200,40,40], 7, 90); this.shake = Math.max(this.shake, 0.08);
     if (a.hp <= 0 && this.animals.includes(a)) { this.animals.splice(this.animals.indexOf(a), 1); this.kill(a); }
   }
@@ -699,7 +707,7 @@ class Game {
       }
     } else this.note(`${p.crop} is ${Math.floor(p.prog*100)}% grown. Patience!  (or Instant Grow in GEM STORE)`);
   }
-  growMult() { return (this.has("farm1") ? 1.3 : 1) * (this.has("farm4") ? 2 : 1) * (1 + this.pb("grow")) * (this.rain > 0 ? 1.5 : 1); }
+  growMult() { return (this.has("farm1") ? 1.3 : 1) * (this.has("farm4") ? 2 : 1) * (1 + this.pb("grow")) * (this.rain > 0 ? 1.5 : 1) * (this.charms.has("sprinkler") ? 1.25 : 1); }
 
   // -------------------------------------------------------------- hunting
   attack() {
@@ -707,7 +715,7 @@ class Game {
     const wpn = WEAPONS[this.tools.weapon]; let a = this.aimAngle();
     if (this.touch) { let best = null, bd = 430; for (const an of this.animals) { const d = dist(an.x, an.y, this.px, this.py); if (d < bd) { bd = d; best = an; } }
       if (best) a = Math.atan2(best.y - this.py, best.x - this.px); }
-    this.projs.push({x: this.px, y: this.py-6, vx: Math.cos(a)*wpn[4], vy: Math.sin(a)*wpn[4], life: 0.8, dmg: wpn[3]*(1 + this.pb("hunt")), a});
+    this.projs.push({x: this.px, y: this.py-6, vx: Math.cos(a)*wpn[4], vy: Math.sin(a)*wpn[4], life: 0.8, dmg: wpn[3]*(1 + this.pb("hunt"))*(this.charms.has("fang_necklace") ? 1.25 : 1), a});
     this.atkCd = wpn[5]*(this.has("hunt1") ? 0.7 : 1);
   }
   spawnAnimal() {
@@ -830,6 +838,45 @@ class Game {
     }
     return true;
   }
+  craftBlocked(r) { const res = r[3];
+    if (res[0] === "tool" && this.tools[res[1]] >= res[2]) return this.tools[res[1]] === res[2] ? "HAVE IT" : "HAVE BETTER";
+    if (res[0] === "charm" && this.charms.has(res[1])) return "OWNED"; return ""; }
+  craft(r, times=1) {
+    const [name, ings, , res] = r; let made = 0, total = 0;
+    for (let i = 0; i < times; i++) {
+      if (this.craftBlocked(r) || !this.plan(r)) break;
+      let val = 0; for (const [spec, k] of this.orderedSpecs(r)) val += this.take(spec, k) || 0;
+      if (res[0] === "item") { const v = Math.max(ITEMS[res[1]].base, val*1.2/res[2]); this.addItem(res[1], v, "", "", res[2]); total += v*res[2]; }
+      else if (res[0] === "tool") { this.tools[res[1]] = res[2]; this.doBanner("CRAFTED!", `${name} equipped`, CYAN); }
+      else if (res[0] === "charm") { this.charms.add(res[1]); this.doBanner("CHARM CRAFTED!", `${name}: ${CHARMS[res[1]][1]} (forever)`, PURPLE); }
+      else if (res[1] === "fire") this.campfires.push([this.px, this.py + 20, 240]);
+      else if (res[1] === "map") { for (let k = 0; k < 3; k++) for (let t = 0; t < 60; t++) { const x = Math.floor(this.px/TS) + randint(-12, 12), y = Math.floor(this.py/TS) + randint(-12, 12);
+          if (x >= 0 && x < MW && y >= 0 && y < MH && (this.tiles[y][x] === GRASS || this.tiles[y][x] === SAND) && !this.blocked.has(key(x, y))) { this.sparkles.add(key(x, y)); break; } }
+        this.doBanner("TREASURE MAP!", "3 sparkle spots appeared near you - dig them!", GOLD); }
+      made++;
+    }
+    if (made) { this.inc("crafted", made); this.gainXp(5*made); this.burst(this.px, this.py, [255,200,120], 14, 140);
+      if (res[0] === "item") this.note(`Crafted ${made*res[2]}x ${res[1]}! (worth ${fmt(total)}c)`, GREEN); else if (res[0] === "action") { this.note(`Made ${name}!`, GREEN); this.menu = null; } }
+  }
+  menu_craft() {
+    const [x, y, w, h] = this.panel("CRAFTING"); this.tabs(x+20, y+66, CRAFT_TABS, 150);
+    const tab = CRAFT_TABS[this.tab], rows = CRAFTS.filter(r => r[2] === tab).sort((a, b) => (!!this.craftBlocked(a) - !!this.craftBlocked(b)) || ((this.plan(a) ? 0 : 1) - (this.plan(b) ? 0 : 1)));
+    const per = 8, maxs = Math.max(0, rows.length - per), st = Math.min(this.scroll, maxs);
+    rows.slice(st, st + per).forEach((r, i) => {
+      const [name, ings, , res, desc] = r, ry = y+112 + i*60, blocked = this.craftBlocked(r), ok = !blocked && this.plan(r);
+      rrect(x+20, ry, w-40, 54, 10, ok ? PANEL2 : [40,42,54]); icon(res[0] === "item" ? res[1] : name, x+48, ry+27, 42);
+      if (res[0] === "item" && res[2] > 1) text(`x${res[2]}`, x+66, ry+36, 18, WHITE);
+      text(name, x+82, ry+6, 25, ok ? WHITE : GREY); text(res[0] === "charm" ? CHARMS[res[1]][1] : desc, x+82, ry+32, 18, [190,200,225]);
+      let cx = x + 430;
+      for (const [spec, n] of ings) { const hv = this.have(spec); cx = text(`${n} ${SPEC_LABEL[spec] || spec} (${hv})`, cx, ry+18, 19, hv >= n ? GREEN : RED).right + 14; }
+      if (blocked) this.button(x+w-196, ry+9, 170, 36, blocked, null, [40,120,70], false, 21);
+      else { this.button(x+w-196, ry+9, 100, 36, "CRAFT", () => this.craft(r), [210,140,60], ok, 22);
+        if (res[0] === "item") this.button(x+w-88, ry+9, 62, 36, "MAX", () => this.craft(r, 99), [60,170,190], ok, 21); }
+    });
+    if (maxs) { if (st > 0) this.button(x+20, y+h-52, 44, 34, "^", () => { this.scroll = Math.max(0, this.scroll-1); }, PANEL3); if (st < maxs) this.button(x+70, y+h-52, 44, 34, "v", () => { this.scroll = Math.min(maxs, this.scroll+1); }, PANEL3); }
+    if (tab === "Charms") text(`Charms work forever once crafted. You have ${this.charms.size}/${Object.keys(CHARMS).length}.`, x+w-24, y+h-40, 20, GOLD, "tr");
+    else text("Tip: sell crafted materials for more than the raw stuff, or to Builder Bea.", x+w-24, y+h-40, 20, GREY, "tr");
+  }
   foodValue(r, val, q) { return (val*1.3 + 15 + r[5]*0.5) * QMULT[q] * (this.has("cook1") ? 1.25 : 1) * (this.has("cook4") ? 2 : 1); }
   quickCook(r, n=1) { // no minigame, always Good quality
     let made = 0, total = 0;
@@ -863,6 +910,7 @@ class Game {
     const it = ITEMS[s.name]; if (!(it.hunger || it.thirst || it.heal)) return false;
     const qm = QMULT[s.q] || 1;
     this.food = Math.min(100, this.food + it.hunger*(0.6 + 0.4*qm)); this.water = Math.min(100, this.water + it.thirst); this.hp = clamp(this.hp + it.heal*(0.6 + 0.4*qm), 1, 100);
+    if (s.name === "Energy Drink") { this.boosts.speed = (this.boosts.speed || 0) + 180; this.note("Energy Drink! You run 1.5x faster for 3 minutes", GREEN); }
     s.count--; if (s.count <= 0) this.removeStack(this.bag, s);
     const parts = [it.hunger ? `+${it.hunger} food` : "", it.thirst ? `+${it.thirst} water` : "", it.heal ? (it.heal > 0 ? `+${it.heal} hp` : `${it.heal} hp (raw!)`) : ""];
     this.floatText(this.px, this.py-40, parts.filter(Boolean).join("  "), GREEN, 22); return true;
@@ -943,7 +991,7 @@ class Game {
     if (this.hatch) { if (this.hatch.t > 3.6) this.hatch = null; return; }
     if (this.cook) { if (k === "Space" || k === "KeyE") this.cookStop(); return; }
     if (k === "Escape") { if (this.sellDlg) this.sellDlg = null; else if (this.menu) this.menu = null; else this.pause(); return; }
-    const toggles = {Tab: "inv", KeyG: "gems", KeyK: "skills", KeyP: "pets"};
+    const toggles = {Tab: "inv", KeyG: "gems", KeyK: "skills", KeyP: "pets", KeyC: "craft"};
     if (toggles[k]) { const m = toggles[k]; if (this.menu === m || (m === "inv" && this.menu === "home")) this.menu = null; else this.openMenu(m); return; }
     if (k === "KeyH") { this.showHelp(); return; }
     if (this.menu) return;
@@ -979,7 +1027,7 @@ class Game {
       if (dx || dy) {
         const ln = Math.hypot(dx, dy); dx /= ln; dy /= ln; this.facing = [dx, dy];
         const sprint = K.has("ShiftLeft") || K.has("ShiftRight") || (this.touch && mag > 0.95);
-        let spd = 150*(1 + this.pb("speed"))*(sprint ? (this.touch ? 1.25 : 1.55) : 1)*mag;
+        let spd = 150*(1 + this.pb("speed"))*(sprint ? (this.touch ? 1.25 : 1.55) : 1)*mag*(this.boosts.speed > 0 ? 1.5 : 1);
         spd *= tile === DEEP ? 0.55 : tile === SHALLOW ? 0.75 : 1;
         const nx = this.px + dx*spd*dt; if (this.canWalk(nx, this.py)) this.px = nx;
         const ny = this.py + dy*spd*dt; if (this.canWalk(this.px, ny)) this.py = ny;
@@ -989,7 +1037,7 @@ class Game {
       }
     }
     if (!busy) {
-      const drain = (this.has("surv1") ? 0.7 : 1)*(1 - Math.min(0.8, this.pb("hunger")));
+      const drain = (this.has("surv1") ? 0.7 : 1)*(1 - Math.min(0.8, this.pb("hunger")))*(this.charms.has("bear_coat") ? 0.75 : 1);
       this.food = Math.max(0, this.food - 100/420*dt*drain); this.water = Math.max(0, this.water - 100/300*dt*drain);
       if (tile === DEEP) this.oxy = Math.max(0, this.oxy - 100/(SWIM_AIR_SECONDS*this.oxyMult())*dt); else this.oxy = Math.min(100, this.oxy + 45*dt);
       if (this.food <= 0) this.hp -= 1.5*dt; if (this.water <= 0) this.hp -= 2*dt;
@@ -1069,11 +1117,11 @@ class Game {
     for (const p of this.parts) { const [sx, sy] = this.w2s(p[0], p[1]); circle(sx, sy, Math.max(1, p[6]*Math.min(1, p[4]*2)), p[5]); }
     if (this.fish && !this.title) this.drawFishingWorld();
     const inCave = !this.title && (this.tileAt(this.px, this.py) === CAVE || this.tileAt(this.px, this.py) === WALL);
-    let a = inCave ? 205 : this.darkness(); if (this.rain > 0) a = Math.max(a, 60);
+    let a = inCave ? (this.charms.has("lantern") ? 150 : 205) : this.darkness(); if (this.rain > 0) a = Math.max(a, 60);
     if (a > 0) {
       const d = this.dctx; d.globalCompositeOperation = "source-over"; d.clearRect(0, 0, W, H); d.fillStyle = `rgba(8,8,30,${a/255})`; d.fillRect(0, 0, W, H);
       d.globalCompositeOperation = "destination-out";
-      const lights = this.title ? [] : [[...this.w2s(this.px, this.py), 170]];
+      const lights = this.title ? [] : [[...this.w2s(this.px, this.py), this.charms.has("lantern") ? 290 : 170]];
       for (const c of this.campfires) lights.push([...this.w2s(c[0], c[1]), 150]);
       for (const b of this.buildings) lights.push([...this.w2s(b.door[0], b.door[1]), 70]);
       for (const [lx, ly, r] of lights) { if (lx < -r || lx > W+r || ly < -r || ly > H+r) continue; const g = d.createRadialGradient(lx, ly, 0, lx, ly, r); g.addColorStop(0, "rgba(0,0,0,0.95)"); g.addColorStop(1, "rgba(0,0,0,0)"); d.fillStyle = g; d.fillRect(lx-r, ly-r, r*2, r*2); }
@@ -1212,8 +1260,8 @@ class Game {
     const lx = W - 16 - 350; rrect(lx, 56, 350, 22, 10, [20,22,36]); const xw = 350*this.xp/this.xpNeed(); if (xw > 20) rrect(lx, 56, xw, 22, 10, PURPLE);
     text(`LEVEL ${this.level}   ${Math.floor(this.xp)}/${this.xpNeed()} XP`, lx+175, 67, 18, WHITE, "c");
     let bx = W - 16;
-    for (const [label, m, col] of [["HELP", null, PANEL3], ["GEMS", "gems", PINK], ["PETS", "pets", [200,110,170]], ["UPGRADES", "skills", PURPLE], ["BAG", "inv", [70,140,200]]]) {
-      const lab = this.touch ? label : label + " [" + {HELP:"H", GEMS:"G", PETS:"P", UPGRADES:"K", BAG:"TAB"}[label] + "]";
+    for (const [label, m, col] of [["HELP", null, PANEL3], ["GEMS", "gems", PINK], ["PETS", "pets", [200,110,170]], ["UPGRADES", "skills", PURPLE], ["CRAFT", "craft", [210,140,60]], ["BAG", "inv", [70,140,200]]]) {
+      const lab = this.touch ? label : label + " [" + {HELP:"H", GEMS:"G", PETS:"P", UPGRADES:"K", CRAFT:"C", BAG:"TAB"}[label] + "]";
       const w = textW(lab, 20) + 20; this.button(bx - w, 86, w, this.touch ? 38 : 30, lab, m ? () => this.openMenu(m) : () => this.showHelp(), col, true, 20); bx -= w + 6;
     }
     if (this.touch) this.button(16 + 230 + 12, 14, 64, 36, "MENU", () => this.pause(), PANEL3, true, 20);
@@ -1316,7 +1364,7 @@ class Game {
   }
   menu_market() {
     const [x, y, w, h] = this.panel("MARKET"), m = this.sellMult();
-    this.tabs(x+20, y+66, CATS.map(c => c[0]), 106);
+    this.tabs(x+20, y+66, CATS.map(c => c[0]), 96);
     const cat = CATS[this.tab][1];
     const items = this.bag.filter(s => cat === null || ITEMS[s.name].cat === cat).sort((a, b) => CAT_ORDER.indexOf(ITEMS[a.name].cat) - CAT_ORDER.indexOf(ITEMS[b.name].cat) || a.name.localeCompare(b.name) || b.value - a.value);
     text(`Your backpack: ${this.count(this.bag)}/${this.bagCap()} items      Sell price x${m.toFixed(2)}  (pets, VIP, upgrades and 2x Coins raise it)`, x+24, y+112, 20, [200,220,255]);
@@ -1368,7 +1416,7 @@ class Game {
   }
   menu_inv(chest=false) {
     const [x, y, w, h] = this.panel(chest ? "HOME - STORAGE" : "BACKPACK");
-    this.tabs(x+20, y+66, CATS.map(c => c[0]), 106);
+    this.tabs(x+20, y+66, CATS.map(c => c[0]), 96);
     const cat = CATS[this.tab][1], cols = chest ? 3 : 6, areaW = chest ? (w-60)/2 : w-40, maxrows = 6;
     const grid = (lst, gx, title, action, actLabel) => {
       text(title, gx, y+110, 24, GOLD);
