@@ -5,6 +5,11 @@ built to show that a game mixing fishing, farming, digging, mining, hunting, coo
 
 ## Play it
 
+- **In your browser:** https://davidvstuhl-prog.github.io/Valley-Life/
+- **Windows download:** https://github.com/davidvstuhl-prog/Valley-Life/releases/latest (get `ValleyLife.exe`)
+
+Other ways:
+
 - **Windows:** open the **Actions** tab, click the newest "Build Valley Life .exe" run, and download
   **ValleyLife-Windows** under *Artifacts*. Unzip it and double-click `ValleyLife.exe`
   (if Windows shows "Windows protected your PC", click *More info* → *Run anyway*).

@@ -6,7 +6,7 @@ play identically, this script takes the world (tiles, trees, rocks), the pre-ren
 the Python game, packs the sprites into one image atlas, and embeds all of it into the page.
 
     pip install pygame pillow
-    python build_web.py                 # writes valley_life_web.html
+    python build_web.py                 # writes valley_life_web.html and docs/index.html (the GitHub Pages site)
     python build_web.py extra_out.html  # also writes a copy without the <html> wrapper (for hosting as an Artifact)
 """
 import base64
@@ -86,6 +86,11 @@ def main(extra_out=None):
             '<body style="margin:0">\n' + page + "\n</body></html>\n")
     with open(os.path.join(HERE, "valley_life_web.html"), "w", encoding="utf-8") as fh:
         fh.write(full)
+    docs = os.path.join(HERE, "docs")   # GitHub Pages serves this folder
+    os.makedirs(docs, exist_ok=True)
+    with open(os.path.join(docs, "index.html"), "w", encoding="utf-8") as fh:
+        fh.write(full)
+    open(os.path.join(docs, ".nojekyll"), "w").close()
     if extra_out:
         with open(extra_out, "w", encoding="utf-8") as fh:
             fh.write(page)

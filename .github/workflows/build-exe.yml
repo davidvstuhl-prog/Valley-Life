@@ -1,10 +1,14 @@
 # Builds the Valley Life game (valley_life.py) into a Windows .exe.
-# Download it from the Actions tab: open the latest run, then "ValleyLife-Windows" under Artifacts.
+# Every push to main also publishes it as the "latest" GitHub Release, so anyone can download it:
+#   https://github.com/davidvstuhl-prog/Valley-Life/releases/latest
 name: Build Valley Life .exe
 
 on:
   push:
   workflow_dispatch:
+
+permissions:
+  contents: write   # lets the build update the "latest" release
 
 jobs:
   build-windows:
@@ -29,3 +33,21 @@ jobs:
           path: |
             dist/ValleyLife.exe
             README.md
+      - name: Move the "latest" tag to this build
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          git tag -f latest
+          git push -f origin refs/tags/latest
+      - name: Publish ValleyLife.exe as the latest release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Valley Life for Windows (latest)
+          body: |
+            Download **ValleyLife.exe** below and double-click it. No install needed.
+            If Windows says "Windows protected your PC", click **More info**, then **Run anyway**.
+            Prefer the browser? Play at https://davidvstuhl-prog.github.io/Valley-Life/
+          files: dist/ValleyLife.exe
+          make_latest: true
