@@ -287,12 +287,12 @@ QUESTS = [
     ("Mine 5 ores in the CAVE (north-east)", "ores", 5, 150, 15, "cave"),
     ("Finish an order for a town NPC", "orders", 1, 150, 15, None),
     ("Open your RESTAURANT & serve a diner", "served", 1, 300, 25, "cook"),
-    ("Craft something: press C (or the CRAFT button)", "crafted", 1, 100, 10, None),
+    ("Craft something at the WORKSHOP (west of Home)", "crafted", 1, 100, 10, "craft"),
 ]
 BUILDINGS = [("HOME", "home", 60, 43, 5, 4, (180, 90, 70)), ("SHOP", "shop", 66, 43, 5, 4, (70, 130, 200)),
              ("MARKET", "market", 76, 43, 5, 4, (220, 170, 60)), ("UPGRADES", "skills", 82, 43, 5, 4, (130, 90, 200)),
              ("PET HATCHERY", "pets", 62, 56, 5, 4, (240, 140, 190)), ("KITCHEN", "cook", 76, 56, 6, 4, (200, 80, 60)),
-             ("GEM STORE", "gems", 85, 56, 5, 4, (60, 200, 220))]
+             ("GEM STORE", "gems", 85, 56, 5, 4, (60, 200, 220)), ("WORKSHOP", "craft", 53, 43, 5, 4, (176, 112, 62))]
 TABLES = [(74, 62), (77, 62), (80, 62), (83, 62)]
 # Named forests. Every tree belongs to the nearest forest centre, which decides what grows there.
 # weights are for TREES order: Oak, Pine, Birch, Maple, Ancient (Ancient Trees can turn up in any forest).
@@ -947,7 +947,7 @@ class Game:
                                    "HOLD Q - dig up treasure (or dive for loot in deep water)",
                                    "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear",
                                    "R - eat best food",
-                                   "C - CRAFTING (tools, charms, materials)   B - campfire   Z - change seed",
+                                   "C - crafting menu (craft at the WORKSHOP)   B - campfire   Z - change seed",
                                    "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
                                    "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"],
                    [("LET'S GO!", None, GREEN)], CYAN)
@@ -1801,10 +1801,20 @@ class Game:
             return "OWNED"
         return ""
 
+    def at_workbench(self):
+        return dist(self.px, self.py, *self.poi["craft"]) < 120
+
+    def needs_bench(self, r):
+        """Survival things can be made anywhere; everything else needs the WORKSHOP's workbench."""
+        return r[2] != "Survival" and not self.at_workbench()
+
     def craft(self, r, times=1):
         name, ings, tab, res, desc = r
         made, total = 0, 0.0
         for _ in range(times):
+            if self.needs_bench(r):
+                self.note("You need the workbench for that - go to the WORKSHOP!", ORANGE)
+                break
             if self.craft_blocked(r) or not self.plan(r):
                 break
             val = sum(self.take(spec, k) or 0 for spec, k in sorted(ings, key=lambda sp: sp[0] in GENERIC))
@@ -1839,6 +1849,11 @@ class Game:
                 self.note(f"Made {name}!", GREEN)
             self.menu = None if res[0] == "action" else self.menu
 
+    def go_to_workshop(self):
+        self.waypoint = "craft"
+        self.menu = None
+        self.note("Follow the arrow to the WORKSHOP", (210, 160, 90))
+
     def menu_craft(self):
         x, y, w, h = self.panel("CRAFTING")
         self.tabs(x + 20, y + 66, CRAFT_TABS, 150)
@@ -1856,7 +1871,7 @@ class Game:
             pygame.draw.rect(self.screen, PANEL2 if ok else (40, 42, 54), (x + 20, ry, w - 40, 54), border_radius=10)
             self.icon(res[1] if res[0] == "item" else name, x + 48, ry + 27, 42)
             if res[0] == "item" and res[2] > 1:
-                self.text(f"x{res[2]}", (x + 66, ry + 36), 18, WHITE)
+                self.text(f"x{res[2]}", (x + 66, ry + 40), 16, WHITE, "tr")
             self.text(name, (x + 82, ry + 6), 25, WHITE if ok else GREY)
             self.text(CHARMS[res[1]][1] if res[0] == "charm" else desc, (x + 82, ry + 32), 18, (190, 200, 225))
             cx = x + 430
@@ -1866,6 +1881,8 @@ class Game:
                 cx = self.text(f"{n} {label} ({have})", (cx, ry + 18), 19, GREEN if have >= n else RED).right + 14
             if blocked:
                 self.button((x + w - 196, ry + 9, 170, 36), blocked, None, (40, 120, 70), False, 21)
+            elif self.needs_bench(r):
+                self.button((x + w - 196, ry + 9, 170, 36), "AT WORKSHOP", None, PANEL3, False, 20)
             else:
                 self.button((x + w - 196, ry + 9, 100, 36), "CRAFT", lambda r=r: self.craft(r), (210, 140, 60), ok, 22)
                 if res[0] == "item":
@@ -1875,7 +1892,10 @@ class Game:
                 self.button((x + 20, y + h - 52, 44, 34), "^", lambda: setattr(self, "scroll", max(0, self.scroll - 1)), PANEL3)
             if st < maxs:
                 self.button((x + 70, y + h - 52, 44, 34), "v", lambda: setattr(self, "scroll", min(maxs, self.scroll + 1)), PANEL3)
-        if tab == "Charms":
+        if tab != "Survival" and not self.at_workbench():
+            self.button((x + 130, y + h - 54, 250, 38), "SHOW ME THE WAY", self.go_to_workshop, (210, 140, 60), size=21)
+            self.text("These need the workbench at the WORKSHOP (Survival works anywhere).", (x + w - 24, y + h - 40), 19, ORANGE, "tr")
+        elif tab == "Charms":
             self.text(f"Charms work forever once crafted. You have {len(self.charms)}/{len(CHARMS)}.", (x + w - 24, y + h - 40), 20, GOLD, "tr")
         else:
             self.text("Tip: sell crafted materials for more than the raw stuff, or to Builder Bea.", (x + w - 24, y + h - 40), 20, GREY, "tr")
@@ -2430,7 +2450,7 @@ class Game:
             self.cur_forest = f
             if f is not None:
                 self.note(f"Entering {FORESTS[f][0]}", (150, 230, 140))
-        if self.waypoint and dist(self.px, self.py, *self.poi["cook"]) < 90:
+        if self.waypoint and dist(self.px, self.py, *self.poi[self.waypoint]) < 90:
             self.waypoint = None
         self.save_t += dt
         if self.save_t > 60:
@@ -2909,8 +2929,8 @@ class Game:
             yy += 22
         if self.restaurant:
             n = len(self.diners)
-            lab = (f"RESTAURANT: {n} waiting" if n else "RESTAURANT: no diners") + ("  (arrow on)" if self.waypoint else "")
-            self.button((W - 296, yy + 4, 280, 30), lab, lambda: setattr(self, "waypoint", None if self.waypoint else "cook"),
+            lab = (f"RESTAURANT: {n} waiting" if n else "RESTAURANT: no diners") + ("  (arrow on)" if self.waypoint == "cook" else "")
+            self.button((W - 296, yy + 4, 280, 30), lab, lambda: setattr(self, "waypoint", None if self.waypoint == "cook" else "cook"),
                         ORANGE if n else PANEL3, size=19)
             yy += 40
         if not self.starter_bought and self.starter_left > 0:
@@ -2952,7 +2972,7 @@ class Game:
         sc.blit(self.mini, (mx, my))
         pygame.draw.circle(sc, WHITE, (mx + int(self.px / TS * 1.5), my + int(self.py / TS * 1.5)), 4)
         pygame.draw.circle(sc, RED, (mx + int(self.px / TS * 1.5), my + int(self.py / TS * 1.5)), 3)
-        tg = self.poi["cook"] if self.waypoint else self.quest_target()
+        tg = self.poi[self.waypoint] if self.waypoint else self.quest_target()
         for n in self.npcs:
             pygame.draw.circle(sc, (120, 200, 255), (mx + int(n["x"] / TS * 1.5), my + int(n["y"] / TS * 1.5)), 3)
         for d in self.diners:

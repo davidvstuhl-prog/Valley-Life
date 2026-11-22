@@ -293,7 +293,7 @@ def building(name, col, w, h, wtile=32):
             p.sparkle(bxp + 8, wy + 22, 4, (130, 80, 200))
     # windows
     if name != "UPGRADES":
-        for wx in (fx + 16, fx + W - 46):
+        for wx in ((fx + W - 46,) if name == "WORKSHOP" else (fx + 16, fx + W - 46)):
             p.orr((248, 242, 232), wx - 2, wy + 22, 34, 28, 3, 1.3)
             p.rect((140, 200, 240), wx + 1, wy + 25, 28, 22)
             p.rect((190, 228, 250), wx + 1, wy + 25, 28, 8)
@@ -337,6 +337,21 @@ def building(name, col, w, h, wtile=32):
         p.orr((150, 100, 60), fx + W - 30, bottom - 30, 20, 24, 6)
         p.line((90, 60, 40), fx + W - 30, bottom - 22, fx + W - 10, bottom - 22, 1.4)
         p.line((90, 60, 40), fx + W - 30, bottom - 13, fx + W - 10, bottom - 13, 1.4)
+    if name == "WORKSHOP":
+        # log pile on the left
+        for k, (lx, ly) in enumerate(((fx + 2, bottom - 10), (fx + 16, bottom - 10), (fx + 9, bottom - 20))):
+            p.orr((150, 102, 58), lx, ly - 6, 14, 10, 4, 1)
+            p.oe((214, 172, 116), lx + 13, ly - 1, 3, 4.5, 0.9)
+        # anvil + hammer on the right
+        ax, ay = fx + W - 30, bottom - 14
+        p.orr((90, 90, 100), ax + 6, ay - 2, 10, 10, 1, 1.1)
+        p.op((120, 122, 134), [(ax - 4, ay - 12), (ax + 26, ay - 12), (ax + 22, ay - 4), (ax + 2, ay - 4)], 1.1)
+        p.poly((170, 172, 184), [(ax - 2, ay - 11), (ax + 24, ay - 11), (ax + 23, ay - 9), (ax, ay - 9)])
+        p.ol((140, 96, 56), [(ax + 4, ay - 16), (ax + 16, ay - 26)], 2, 0.8)
+        p.orr((100, 100, 110), ax + 12, ay - 31, 10, 7, 1, 0.9)
+        # saw on the wall
+        p.op((200, 204, 214), [(fx + 22, wy + 22), (fx + 52, wy + 22), (fx + 52, wy + 30), (fx + 22, wy + 28)], 1)
+        p.orr((150, 102, 58), fx + 14, wy + 20, 9, 10, 2, 1)
     if name == "HOME":
         p.orr((90, 90, 110), fx + W - 18, bottom - 34, 4, 28, 1)
         p.orr((70, 120, 200), fx + W - 26, bottom - 44, 18, 12, 4)

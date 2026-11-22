@@ -204,12 +204,12 @@ const QUESTS = [
   ["Cook a meal at the KITCHEN","cooked",1,80,10,"cook"],["Buy an upgrade at the UPGRADES hall","skills",1,100,10,"skills"],
   ["Hatch a pet at the PET HATCHERY","hatched",1,100,15,"pets"],["Mine 5 ores in the CAVE (north-east)","ores",5,150,15,"cave"],
   ["Finish an order for a town NPC","orders",1,150,15,null],["Open your RESTAURANT & serve a diner","served",1,300,25,"cook"],
-  ["Craft something: press C (or the CRAFT button)","crafted",1,100,10,null],
+  ["Craft something at the WORKSHOP (west of Home)","crafted",1,100,10,"craft"],
 ];
 const TOUCH_QUEST = {0:"Catch a fish! Stand by water, HOLD the FISH button, let go", 1:"Chop 5 logs: tap USE at a tree on the GREEN",
   2:"Dig up 3 things: HOLD the DIG button on grass", 4:"Plant a seed: tap USE on a garden plot", 5:"Hunt an animal: tap HUNT, or USE up close for your axe"};
 const BUILDINGS = [["HOME","home",60,43,5,4,[180,90,70]],["SHOP","shop",66,43,5,4,[70,130,200]],["MARKET","market",76,43,5,4,[220,170,60]],
-  ["UPGRADES","skills",82,43,5,4,[130,90,200]],["PET HATCHERY","pets",62,56,5,4,[240,140,190]],["KITCHEN","cook",76,56,6,4,[200,80,60]],["GEM STORE","gems",85,56,5,4,[60,200,220]]];
+  ["UPGRADES","skills",82,43,5,4,[130,90,200]],["PET HATCHERY","pets",62,56,5,4,[240,140,190]],["KITCHEN","cook",76,56,6,4,[200,80,60]],["GEM STORE","gems",85,56,5,4,[60,200,220]],["WORKSHOP","craft",53,43,5,4,[176,112,62]]];
 const TABLES = [[74,62],[77,62],[80,62],[83,62]];
 const DINER_PATIENCE = 240, HOLE_TIME = 20;
 // Does this bag stack count as ingredient `spec`? Rare (Epic+) or mutated fish are never cooked automatically.
@@ -455,7 +455,7 @@ class Game {
       "WASD / Arrows - walk      SHIFT - sprint", "E - use stuff: chop tree, mine rock, plant/harvest, drink, talk, enter",
       "HOLD F, aim with mouse, let go - cast rod.  Press F/SPACE on the  !", "Reeling: HOLD SPACE or mouse - keep the fish in the green box",
       "HOLD Q - dig up treasure (or dive for loot in deep water)", "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear", "R - eat best food",
-      "C - CRAFTING (tools, charms, materials)   B - campfire   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
+      "C - crafting menu (craft at the WORKSHOP)   B - campfire   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
       "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"];
     this.popup("HOW TO PLAY", lines, [["LET'S GO!", null, GREEN]], CYAN);
   }
@@ -841,9 +841,13 @@ class Game {
   craftBlocked(r) { const res = r[3];
     if (res[0] === "tool" && this.tools[res[1]] >= res[2]) return this.tools[res[1]] === res[2] ? "HAVE IT" : "HAVE BETTER";
     if (res[0] === "charm" && this.charms.has(res[1])) return "OWNED"; return ""; }
+  atWorkbench() { return dist(this.px, this.py, ...this.poi.craft) < 120; }
+  needsBench(r) { return r[2] !== "Survival" && !this.atWorkbench(); } // Survival works anywhere; the rest needs the WORKSHOP
+  goToWorkshop() { this.waypoint = "craft"; this.menu = null; this.note("Follow the arrow to the WORKSHOP", [210,160,90]); }
   craft(r, times=1) {
     const [name, ings, , res] = r; let made = 0, total = 0;
     for (let i = 0; i < times; i++) {
+      if (this.needsBench(r)) { this.note("You need the workbench for that - go to the WORKSHOP!", ORANGE); break; }
       if (this.craftBlocked(r) || !this.plan(r)) break;
       let val = 0; for (const [spec, k] of this.orderedSpecs(r)) val += this.take(spec, k) || 0;
       if (res[0] === "item") { const v = Math.max(ITEMS[res[1]].base, val*1.2/res[2]); this.addItem(res[1], v, "", "", res[2]); total += v*res[2]; }
@@ -865,16 +869,19 @@ class Game {
     rows.slice(st, st + per).forEach((r, i) => {
       const [name, ings, , res, desc] = r, ry = y+112 + i*60, blocked = this.craftBlocked(r), ok = !blocked && this.plan(r);
       rrect(x+20, ry, w-40, 54, 10, ok ? PANEL2 : [40,42,54]); icon(res[0] === "item" ? res[1] : name, x+48, ry+27, 42);
-      if (res[0] === "item" && res[2] > 1) text(`x${res[2]}`, x+66, ry+36, 18, WHITE);
+      if (res[0] === "item" && res[2] > 1) text(`x${res[2]}`, x+66, ry+40, 16, WHITE, "tr");
       text(name, x+82, ry+6, 25, ok ? WHITE : GREY); text(res[0] === "charm" ? CHARMS[res[1]][1] : desc, x+82, ry+32, 18, [190,200,225]);
       let cx = x + 430;
       for (const [spec, n] of ings) { const hv = this.have(spec); cx = text(`${n} ${SPEC_LABEL[spec] || spec} (${hv})`, cx, ry+18, 19, hv >= n ? GREEN : RED).right + 14; }
       if (blocked) this.button(x+w-196, ry+9, 170, 36, blocked, null, [40,120,70], false, 21);
+      else if (this.needsBench(r)) this.button(x+w-196, ry+9, 170, 36, "AT WORKSHOP", null, PANEL3, false, 20);
       else { this.button(x+w-196, ry+9, 100, 36, "CRAFT", () => this.craft(r), [210,140,60], ok, 22);
         if (res[0] === "item") this.button(x+w-88, ry+9, 62, 36, "MAX", () => this.craft(r, 99), [60,170,190], ok, 21); }
     });
     if (maxs) { if (st > 0) this.button(x+20, y+h-52, 44, 34, "^", () => { this.scroll = Math.max(0, this.scroll-1); }, PANEL3); if (st < maxs) this.button(x+70, y+h-52, 44, 34, "v", () => { this.scroll = Math.min(maxs, this.scroll+1); }, PANEL3); }
-    if (tab === "Charms") text(`Charms work forever once crafted. You have ${this.charms.size}/${Object.keys(CHARMS).length}.`, x+w-24, y+h-40, 20, GOLD, "tr");
+    if (tab !== "Survival" && !this.atWorkbench()) { this.button(x+130, y+h-54, 250, 38, "SHOW ME THE WAY", () => this.goToWorkshop(), [210,140,60], true, 21);
+      text("These need the workbench at the WORKSHOP (Survival works anywhere).", x+w-24, y+h-40, 19, ORANGE, "tr"); }
+    else if (tab === "Charms") text(`Charms work forever once crafted. You have ${this.charms.size}/${Object.keys(CHARMS).length}.`, x+w-24, y+h-40, 20, GOLD, "tr");
     else text("Tip: sell crafted materials for more than the raw stuff, or to Builder Bea.", x+w-24, y+h-40, 20, GREY, "tr");
   }
   foodValue(r, val, q) { return (val*1.3 + 15 + r[5]*0.5) * QMULT[q] * (this.has("cook1") ? 1.25 : 1) * (this.has("cook4") ? 2 : 1); }
@@ -1073,7 +1080,7 @@ class Game {
     this.petPos.forEach((pp, k) => { const a = Math.PI/2 + (k - (this.petPos.length-1)/2)*0.9 - Math.atan2(this.facing[0], this.facing[1]);
       pp[0] += (this.px + Math.cos(a)*38 - pp[0])*Math.min(1, dt*4); pp[1] += (this.py + Math.sin(a)*30 - pp[1])*Math.min(1, dt*4); });
     if (!busy) this.checkQuest();
-    if (this.waypoint && dist(this.px, this.py, ...this.poi.cook) < 90) this.waypoint = null;
+    if (this.waypoint && dist(this.px, this.py, ...this.poi[this.waypoint]) < 90) this.waypoint = null;
     const fh = this.forestHere(); if (fh !== this.curForest) { this.curForest = fh; if (fh !== null) this.note(`Entering ${FORESTS[fh][0]}`, [150,230,140]); }
     this.saveT += dt; if (this.saveT > 60) { this.saveT = 0; this.save(); }
     let cx = clamp(this.px - W/2, 0, MW*TS - W), cy = clamp(this.py - H/2, 0, MH*TS - H);
@@ -1268,8 +1275,8 @@ class Game {
     let yy = this.touch ? 134 : 124;
     for (const k in this.boosts) if (this.boosts[k] > 0) { const v = this.boosts[k]; text(`2x ${k.toUpperCase()}  ${Math.floor(v/60)}:${String(Math.floor(v%60)).padStart(2,"0")}`, W-16, yy, 20, PINK, "tr"); yy += 22; }
     if (this.vip) { text("VIP  +50% coins", W-16, yy, 20, GOLD, "tr"); yy += 22; }
-    if (this.restaurant) { const n = this.diners.length, lab = (n ? `RESTAURANT: ${n} waiting` : "RESTAURANT: no diners") + (this.waypoint ? "  (arrow on)" : "");
-      this.button(W-296, yy+4, 280, 30, lab, () => { this.waypoint = this.waypoint ? null : "cook"; }, n ? ORANGE : PANEL3, true, 19); yy += 40; }
+    if (this.restaurant) { const n = this.diners.length, lab = (n ? `RESTAURANT: ${n} waiting` : "RESTAURANT: no diners") + (this.waypoint === "cook" ? "  (arrow on)" : "");
+      this.button(W-296, yy+4, 280, 30, lab, () => { this.waypoint = this.waypoint === "cook" ? null : "cook"; }, n ? ORANGE : PANEL3, true, 19); yy += 40; }
     if (!this.starterBought && this.starterLeft > 0) { const sl = Math.floor(this.starterLeft); this.button(W-236, yy+4, 220, 32, `STARTER PACK -90%  ${Math.floor(sl/60)}:${String(sl%60).padStart(2,"0")}`, () => this.openMenu("gems"), [210,60,150], true, 19); yy += 40; }
     [...this.notes].reverse().forEach((n, i) => text(n[0], W-16, yy+6+i*24, 21, n[1], "tr"));
     const [kind, obj, h0] = this.context(); let hint = h0;
@@ -1283,11 +1290,11 @@ class Game {
       const mw = MW*1.5, mh = MH*1.5, mx = W - mw - 16, my = H - mh - 16;
       rrect(mx-4, my-4, mw+8, mh+8, 6, [10,10,20]); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mini, mx, my, mw, mh); ctx.imageSmoothingEnabled = true;
       circle(mx + this.px/TS*1.5, my + this.py/TS*1.5, 4, WHITE); circle(mx + this.px/TS*1.5, my + this.py/TS*1.5, 3, RED);
-      const tg = this.waypoint ? this.poi.cook : this.questTarget(); if (tg) circle(mx + tg[0]/TS*1.5, my + tg[1]/TS*1.5, 4, GOLD, 2);
+      const tg = this.waypoint ? this.poi[this.waypoint] : this.questTarget(); if (tg) circle(mx + tg[0]/TS*1.5, my + tg[1]/TS*1.5, 4, GOLD, 2);
       for (const n of this.npcs) circle(mx + n.x/TS*1.5, my + n.y/TS*1.5, 3, [120,200,255]);
       for (const d of this.diners) circle(mx + d.x/TS*1.5, my + d.y/TS*1.5, 3, ORANGE);
     }
-    const tg = this.waypoint ? this.poi.cook : this.questTarget();
+    const tg = this.waypoint ? this.poi[this.waypoint] : this.questTarget();
     if (tg) { const d = dist(tg[0], tg[1], this.px, this.py);
       if (d > 220) { const a = Math.atan2(tg[1]-this.py, tg[0]-this.px), [sx, sy] = this.w2s(this.px, this.py), cx = sx + Math.cos(a)*70, cy = sy + Math.sin(a)*70;
         poly([[cx + Math.cos(a)*16, cy + Math.sin(a)*16], [cx + Math.cos(a+2.5)*12, cy + Math.sin(a+2.5)*12], [cx + Math.cos(a-2.5)*12, cy + Math.sin(a-2.5)*12]], shade(GOLD, 40*Math.sin(this.t*6)));
