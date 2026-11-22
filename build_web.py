@@ -63,7 +63,9 @@ def main(extra_out=None):
     world = {
         "tiles": "".join(str(v) for row in game.tiles for v in row),
         "zones": "".join(zone_letter.get(game.zone.get((x, y)), "-") for y in range(V.MH) for x in range(V.MW)),
-        "trees": [[t["x"], t["y"], t["t"]] for t in game.trees],
+        "trees": [[t["x"], t["y"], t["t"], t["f"]] for t in game.trees],
+        "forests": V.FORESTS,
+        "ancientRegrow": V.ANCIENT_REGROW,
         "ores": [[o["x"], o["y"], o["o"]] for o in game.ores],
     }
     with open(os.path.join(HERE, "web", "template.html"), encoding="utf-8") as fh:

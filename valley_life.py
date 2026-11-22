@@ -188,7 +188,7 @@ def tool_desc(kind, t):
     if kind == "axe":
         return f"Chop power {t[3]:g}"
     if kind == "pick":
-        return f"Mine power {t[3]:g}   Can mine: {TIER_NAMES[t[4]]} tier rocks"
+        return f"Mine power {t[3]:g}   Fast on: {TIER_NAMES[t[4]]} tier rocks and below"
     if kind == "shovel":
         return f"Dig speed x{t[3]:g}   Treasure luck +{int(t[4] * 100)}%"
     if kind == "weapon":
@@ -280,7 +280,7 @@ QUESTS = [
     ("Dig up 3 things: HOLD Q on grass", "digs", 3, 60, 5, None),
     ("Sell your stuff at the MARKET", "sold", 1, 50, 5, "market"),
     ("Plant a seed: press E on a garden plot", "planted", 1, 40, 5, "garden"),
-    ("Hunt an animal: CLICK to throw your spear", "kills", 1, 80, 10, None),
+    ("Hunt an animal: CLICK = spear, RIGHT-CLICK = axe up close", "kills", 1, 80, 10, None),
     ("Cook a meal at the KITCHEN", "cooked", 1, 80, 10, "cook"),
     ("Buy an upgrade at the UPGRADES hall", "skills", 1, 100, 10, "skills"),
     ("Hatch a pet at the PET HATCHERY", "hatched", 1, 100, 15, "pets"),
@@ -293,6 +293,17 @@ BUILDINGS = [("HOME", "home", 60, 43, 5, 4, (180, 90, 70)), ("SHOP", "shop", 66,
              ("PET HATCHERY", "pets", 62, 56, 5, 4, (240, 140, 190)), ("KITCHEN", "cook", 76, 56, 6, 4, (200, 80, 60)),
              ("GEM STORE", "gems", 85, 56, 5, 4, (60, 200, 220))]
 TABLES = [(74, 62), (77, 62), (80, 62), (83, 62)]
+# Named forests. Every tree belongs to the nearest forest centre, which decides what grows there.
+# weights are for TREES order: Oak, Pine, Birch, Maple, Ancient (Ancient Trees can turn up in any forest).
+FORESTS = [("Pine Ridge", 24, 18, [10, 88, 2, 0, 1.2]), ("Oakwood", 66, 22, [85, 5, 10, 0, 1.2]),
+           ("Birch Grove", 116, 50, [15, 5, 80, 0, 1.2]), ("Maple Hollow", 120, 88, [35, 0, 15, 50, 1.2]),
+           ("Old Oak Wilds", 62, 86, [70, 10, 10, 10, 1.2]), ("Whispering Pines", 16, 52, [20, 75, 5, 0, 1.2])]
+ANCIENT_REGROW = 2.5   # weight of an Ancient Tree when a stump regrows (about 1 in 40)
+
+
+def forest_of(x, y):
+    return min(range(len(FORESTS)), key=lambda i: (x - FORESTS[i][1]) ** 2 + (y - FORESTS[i][2]) ** 2)
+NPC_TIME = 300.0
 DINER_PATIENCE = 240.0
 HOLE_TIME = 20.0
 
@@ -399,6 +410,7 @@ class Game:
         self._scaled = {}
         self.sell_dlg = None
         self.waypoint = None
+        self.cur_forest = None
         self.title = True
         self.menu = None
         self.tab = 0
@@ -425,6 +437,7 @@ class Game:
         self.npc_t = 15.0
         self.diner_t = 6.0
         self.atk_cd = self.mine_cd = self.drink_cd = 0.0
+        self.axe_cd = self.swing = 0.0
         self.mouse = (0, 0)
         self.starter_left = 600.0
         self.last_full_offer = -999.0
@@ -763,8 +776,9 @@ class Game:
                 n = nf(x, y)
                 p = 0.5 if n > 0.58 else 0.22 if n > 0.5 else 0.025
                 if R.random() < p:
-                    k = R.choices(range(len(TREES)), [t[5] for t in TREES])[0]
-                    self.trees.append(dict(x=x, y=y, t=k, hp=TREES[k][2], stump=0.0))
+                    f = forest_of(x, y)
+                    k = R.choices(range(len(TREES)), FORESTS[f][3])[0]
+                    self.trees.append(dict(x=x, y=y, t=k, hp=TREES[k][2], stump=0.0, f=f))
                     self.blocked.add((x, y))
         self.grass_tiles = [(x, y) for y in range(MH) for x in range(MW) if T[y][x] == GRASS
                             and (x, y) not in self.blocked and not (48 <= x <= 94 and 38 <= y <= 72)]
@@ -870,7 +884,8 @@ class Game:
                                    "HOLD F, aim with mouse, let go - cast rod.  Press F/SPACE on the  !",
                                    "Reeling: HOLD SPACE or mouse - keep the fish in the green box",
                                    "HOLD Q - dig up treasure (or dive for loot in deep water)",
-                                   "LEFT CLICK - throw spear (hunting)    R - eat best food",
+                                   "LEFT CLICK - throw spear    RIGHT CLICK - chop / mine / axe animals up close",
+                                   "R - eat best food",
                                    "B - build campfire (3 logs, cook anywhere)   Z - change seed",
                                    "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
                                    "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"],
@@ -1018,7 +1033,7 @@ class Game:
         if b:
             return "bld", b, f"[E] Enter {b['name']}"
         for n in self.npcs:
-            if n["state"] == "wait" and dist(n["x"], n["y"], self.px, self.py) < 52:
+            if n["state"] == "roam" and dist(n["x"], n["y"], self.px, self.py) < 56:
                 return "npc", n, f"[E] Give {n['cnt']}x {n['item']} to {n['name']}"
         for d in self.diners:
             if dist(d["x"], d["y"], self.px, self.py) < 56:
@@ -1041,11 +1056,16 @@ class Game:
             return "tree", t, f"[E] Chop {TREES[t['t']][0]} - hit when the needle is GREEN!"
         o = self.near_ore()
         if o:
-            return "ore", o, f"[Hold E] Mine {ORES[o['o']][0]}"
+            slow = ORES[o["o"]][1] > PICKS[self.tools["pick"]][4]
+            return "ore", o, (f"[Hold E / right click] Mine {ORES[o['o']][0]}"
+                              + (f"  (very slow - a {TIER_NAMES[ORES[o['o']][1]]} Pickaxe is faster)" if slow else ""))
         if self.near_water() and self.tile_at(self.px, self.py) != DEEP:
             return "water", None, "[E] Drink water    [Hold F] Fish"
         if self.tile_at(self.px, self.py) == DEEP:
             return "swim", None, "Swimming! [Hold Q] Dive for treasure - watch your OXYGEN!"
+        a = self.near_animal()
+        if a:
+            return None, None, f"[Right click / E] Hit the {a['kind']} with your axe!"
         return None, None, ""
 
     def interact(self):
@@ -1064,11 +1084,52 @@ class Game:
             self.chop(obj)
         elif kind == "ore":
             self.mine(obj)
-        elif kind == "water":
-            if self.drink_cd <= 0:
-                self.water = min(100, self.water + 25)
-                self.drink_cd = 0.4
-                self.float_text(self.px, self.py - 30, "+25 water", BLUE)
+        elif kind == "water" and self.drink_cd <= 0:
+            self.water = min(100, self.water + 25)
+            self.drink_cd = 0.4
+            self.float_text(self.px, self.py - 30, "+25 water", BLUE)
+        elif kind is None and self.near_animal():
+            self.axe_hit(self.near_animal())
+
+    def right_click(self):
+        """Right click: axe an animal that's close, otherwise chop / mine / use whatever is in front of you."""
+        a = self.near_animal()
+        if a:
+            self.axe_hit(a)
+        else:
+            self.interact()
+
+    def forest_here(self):
+        tx, ty = int(self.px // TS), int(self.py // TS)
+        if 48 <= tx <= 94 and 38 <= ty <= 72:
+            return None
+        f = forest_of(tx, ty)
+        return f if dist(tx, ty, FORESTS[f][1], FORESTS[f][2]) < 26 else None
+
+    def near_animal(self, reach=60):
+        best, bd = None, reach
+        for a in self.animals:
+            d = dist(a["x"], a["y"], self.px, self.py) - ANIMALS[a["kind"]]["size"] * 0.5
+            if d < bd:
+                best, bd = a, d
+        return best
+
+    def axe_hit(self, a):
+        if self.axe_cd > 0:
+            return
+        self.axe_cd = 0.45
+        self.swing = 0.22
+        ln = dist(a["x"], a["y"], self.px, self.py) or 1
+        self.facing = ((a["x"] - self.px) / ln, (a["y"] - self.py) / ln)
+        dmg = (6 + AXES[self.tools["axe"]][3] * 4) * (1.5 if self.has("wood1") else 1)
+        a["hp"] -= dmg
+        a["flash"] = 0.2
+        self.float_text(a["x"], a["y"] - 25, f"-{int(dmg)}", ORANGE, 24)
+        self.burst(a["x"], a["y"], (200, 40, 40), 7, 90)
+        self.shake = max(self.shake, 0.08)
+        if a["hp"] <= 0 and a in self.animals:
+            self.animals.remove(a)
+            self.kill(a)
 
     # ------------------------------------------------------------ fishing
     def cast_power(self):
@@ -1262,10 +1323,10 @@ class Game:
         pick = PICKS[self.tools["pick"]]
         self.mine_cd = 0.4 / (1.4 if self.has("dig1") else 1)
         x, y = o["x"] * TS + 16, o["y"] * TS + 16
-        if pick[4] < tier:
-            self.float_text(x, y - 20, f"Need a {TIER_NAMES[tier]} Pickaxe!", RED, 22)
-            return
-        o["hp"] -= pick[3] * (1.4 if self.has("dig1") else 1)
+        diff = tier - pick[4]   # pickaxe too weak? It still works, just very slowly (like obsidian)
+        o["hp"] -= pick[3] * (1.4 if self.has("dig1") else 1) * self.mine_slow(diff)
+        if diff > 0 and random.random() < 0.12:
+            self.float_text(x, y - 34, f"So hard! A {TIER_NAMES[tier]} Pickaxe would be faster", ORANGE, 20)
         self.burst(x, y, col, 6, 100, 0.4, 3)
         self.shake = max(self.shake, 0.05)
         if o["hp"] <= 0:
@@ -1279,6 +1340,11 @@ class Game:
             o["hp"] = hp
             self.blocked.discard((o["x"], o["y"]))  # broken rubble has no hitbox
             self.rare_fx(name, ridx(rar), x, y)
+
+    @staticmethod
+    def mine_slow(diff):
+        """Damage multiplier when the pickaxe is below the rock's tier."""
+        return 0.3 / diff ** 0.6 if diff > 0 else 1.0
 
     def finish_dig(self, tx, ty, dive):
         x, y = tx * TS + 16, ty * TS + 16
@@ -1509,7 +1575,7 @@ class Game:
     def spawn_npc(self):
         names = {n["name"] for n in self.npcs}
         opts = [b for b in BUYERS if b[0] not in names]
-        if not opts or len(self.npcs) >= 3:
+        if not opts or len(self.npcs) >= 5:
             return
         name, cat, col = random.choice(opts)
         pal = BUYERS.index((name, cat, col))
@@ -1523,9 +1589,27 @@ class Game:
         cnt = random.randint(5, 12) if cat == "wood" else random.randint(1, 2) if cat == "food" else random.randint(2, 5)
         reward = int(ITEMS[item]["base"] * cnt * 1.8 + 25)
         sx = random.choice([51 * TS, 92 * TS])
-        self.npcs.append(dict(pal=pal, name=name, cat=cat, item=item, cnt=cnt, reward=reward, gems=random.choice([0, 0, 1, 2, 3]),
-                              col=col, x=float(sx), y=52.9 * TS, sx=sx, sy=52.9 * TS, tx=random.randint(56, 89) * TS + 16.0,
-                              ty=random.randint(49, 54) * TS + 16.0, state="walk", timer=180.0, msg=""))
+        n = dict(pal=pal, name=name, cat=cat, item=item, cnt=cnt, reward=reward, gems=random.choice([0, 0, 1, 2, 3]),
+                 col=col, x=float(sx), y=52.9 * TS, tx=float(sx), ty=52.9 * TS, state="roam", timer=NPC_TIME, pause=0.0, msg="")
+        self.npc_pick_target(n)
+        self.npcs.append(n)
+        self.note(f"{name} is wandering the valley looking for {cnt}x {item}! (blue dot on the map)", (150, 210, 255))
+
+    def npc_can_stand(self, x, y):
+        return self.can_walk(x, y, 9) and self.tile_at(x, y) not in WATER
+
+    def npc_pick_target(self, n):
+        """Pick a spot up to ~13 tiles away that can be reached in a straight line (no trees, water or cliffs in the way)."""
+        for _ in range(16):
+            a = random.uniform(0, math.tau)
+            d = random.uniform(96, 420)
+            tx, ty = n["x"] + math.cos(a) * d, n["y"] + math.sin(a) * d
+            steps = int(d // 14)
+            if all(self.npc_can_stand(n["x"] + (tx - n["x"]) * k / steps, n["y"] + (ty - n["y"]) * k / steps)
+                   for k in range(1, steps + 1)):
+                n["tx"], n["ty"] = tx, ty
+                return
+        n["tx"], n["ty"] = n["x"], n["y"]
 
     def fulfill(self, n):
         if self.have(n["item"]) < n["cnt"]:
@@ -1539,7 +1623,7 @@ class Game:
         self.note(f"{n['name']} paid you {n['reward']} coins" + (f" + {n['gems']} gems!" if n["gems"] else "!"), GOLD)
         self.float_text(n["x"], n["y"] - 40, "THANK YOU!!", GOLD, 28)
         self.burst(n["x"], n["y"], GOLD, 16, 140)
-        n["state"], n["tx"], n["ty"], n["msg"] = "leave", n["sx"], n["sy"], "Thanks!"
+        n["state"], n["timer"], n["msg"] = "leave", 2.5, "Thanks!"
 
     def update_npcs(self, dt):
         self.npc_t -= dt
@@ -1547,20 +1631,31 @@ class Game:
             self.npc_t = random.uniform(30, 50)
             self.spawn_npc()
         for n in list(self.npcs):
+            n["timer"] -= dt
+            if n["state"] == "leave":
+                if n["timer"] <= 0:
+                    self.npcs.remove(n)
+                continue
+            if n["timer"] <= 0:
+                n["state"], n["timer"], n["msg"] = "leave", 2.5, "Too slow... bye!"
+                continue
+            if dist(n["x"], n["y"], self.px, self.py) < 70:   # stop to talk when you walk up
+                continue
+            if n["pause"] > 0:
+                n["pause"] -= dt
+                continue
             dx, dy = n["tx"] - n["x"], n["ty"] - n["y"]
             d = math.hypot(dx, dy)
-            if n["state"] in ("walk", "leave") and d > 3:
-                n["x"] += dx / d * 80 * dt
-                n["y"] += dy / d * 80 * dt
-            elif n["state"] == "walk":
-                n["state"] = "wait"
-            elif n["state"] == "leave":
-                self.npcs.remove(n)
+            if d < 4:
+                n["pause"] = random.uniform(1.5, 5.0)
+                self.npc_pick_target(n)
                 continue
-            if n["state"] == "wait":
-                n["timer"] -= dt
-                if n["timer"] <= 0:
-                    n["state"], n["tx"], n["ty"], n["msg"] = "leave", n["sx"], n["sy"], "Too slow..."
+            step = min(d, 60 * dt)
+            nx, ny = n["x"] + dx / d * step, n["y"] + dy / d * step
+            if self.npc_can_stand(nx, ny) or not self.npc_can_stand(n["x"], n["y"]):
+                n["x"], n["y"] = nx, ny
+            else:
+                self.npc_pick_target(n)   # something grew in the way
         if not self.restaurant:
             return
         self.diner_t -= dt
@@ -1918,6 +2013,9 @@ class Game:
                 self.scroll = max(0, self.scroll - ev.y)
             else:
                 self.sel_seed = (self.sel_seed - ev.y) % len(CROPS)
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
+            if not (self.popups or self.title or self.hatch or self.cook or self.menu or self.fish):
+                self.right_click()
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             self.mouse = ev.pos
             for r, cb in reversed(self.buttons):
@@ -2025,7 +2123,7 @@ class Game:
             self.boosts[b] = max(0.0, self.boosts[b] - dt)
         if not self.starter_bought:
             self.starter_left = max(0.0, self.starter_left - dt)
-        for v in ("atk_cd", "mine_cd", "drink_cd", "hurt", "shake"):
+        for v in ("atk_cd", "mine_cd", "drink_cd", "hurt", "shake", "axe_cd", "swing"):
             setattr(self, v, max(0.0, getattr(self, v) - dt))
         tile = self.tile_at(self.px, self.py)
         # movement
@@ -2080,7 +2178,7 @@ class Game:
             if self.hp <= 0:
                 self.die()
             self.update_dig(dt, keys)
-            if keys[pygame.K_e] and self.mine_cd <= 0:
+            if (keys[pygame.K_e] or pygame.mouse.get_pressed()[2]) and self.mine_cd <= 0:   # hold E / right click to keep mining
                 kind, obj, _ = self.context()
                 if kind == "ore":
                     self.mine(obj)
@@ -2100,8 +2198,11 @@ class Game:
                     if dist(self.px, self.py, t["x"] * TS + 16, t["y"] * TS + 16) < 34:
                         t["stump"] = 1.0  # wait until the player steps off the stump
                         continue
-                    t["t"] = random.choices(range(len(TREES)), [x[5] for x in TREES])[0]
+                    w = FORESTS[t["f"]][3][:4] + [ANCIENT_REGROW]
+                    t["t"] = random.choices(range(len(TREES)), w)[0]
                     t["hp"] = TREES[t["t"]][2]
+                    if TREES[t["t"]][0] == "Ancient":
+                        self.note(f"An ANCIENT TREE has grown in {FORESTS[t['f']][0]}!", GOLD)
                     self.blocked.add((t["x"], t["y"]))
         for o in self.ores:
             if o["respawn"] > 0:
@@ -2173,6 +2274,11 @@ class Game:
             pp[1] += (ty - pp[1]) * min(1, dt * 4)
         if not busy:
             self.check_quest()
+        f = self.forest_here()
+        if f != self.cur_forest:
+            self.cur_forest = f
+            if f is not None:
+                self.note(f"Entering {FORESTS[f][0]}", (150, 230, 140))
         if self.waypoint and dist(self.px, self.py, *self.poi["cook"]) < 90:
             self.waypoint = None
         self.save_t += dt
@@ -2439,11 +2545,12 @@ class Game:
 
     def draw_npc(self, n):
         sx, sy = self.w2s(n["x"], n["y"] + 12)
-        moving = n["state"] in ("walk", "leave") and dist(n["x"], n["y"], n["tx"], n["ty"]) > 3
+        moving = (n["state"] == "roam" and n["pause"] <= 0 and dist(n["x"], n["y"], n["tx"], n["ty"]) > 3
+                  and dist(n["x"], n["y"], self.px, self.py) >= 70)
         d = self.dir_of(n["tx"] - n["x"], n["ty"] - n["y"]) if moving else "down"
         self.blit_spr(f"p_npc{n['pal']}_{d}_{self.walk_frame(moving)}", sx, sy)
         self.text(n["name"], (sx, sy + 12), 18, WHITE, "c")
-        if n["state"] == "wait":
+        if n["state"] == "roam":
             self.bubble(sx, sy - 60, [f"WANT: {n['cnt']}x {n['item']}",
                                       f"Pays {n['reward']}c" + (f" + {n['gems']} gems" if n["gems"] else "")])
             self.icon(n["item"], sx + self.font(18).size(f"WANT: {n['cnt']}x {n['item']}")[0] // 2 + 22, sy - 82, 26)
@@ -2490,6 +2597,15 @@ class Game:
                 y0 = sy - 54
                 pygame.draw.polygon(sc, GOLD, [(sx - 9, y0 + 8), (sx - 9, y0), (sx - 4, y0 + 5), (sx, y0 - 3), (sx + 4, y0 + 5),
                                                (sx + 9, y0), (sx + 9, y0 + 8)])
+        if self.swing > 0:
+            a = math.atan2(self.facing[1], self.facing[0])
+            k = 1 - self.swing / 0.22
+            r = pygame.Rect(0, 0, 70, 56)
+            r.center = (sx, sy - 18)
+            pygame.draw.arc(sc, WHITE, r, -a - 1.1 + k * 0.6, -a + 1.1 + k * 0.6, 3)
+            hx, hy = sx + math.cos(a - 0.9 + k * 1.8) * 30, sy - 18 + math.sin(a - 0.9 + k * 1.8) * 24
+            pygame.draw.line(sc, (110, 76, 46), (sx, sy - 18), (hx, hy), 4)
+            pygame.draw.circle(sc, (190, 190, 200), (int(hx), int(hy)), 6)
         if self.dig_prog > 0:
             cy = sy - 12
             pygame.draw.rect(sc, (20, 20, 20), (sx - 30, cy + 22, 60, 9), border_radius=4)
@@ -2577,6 +2693,10 @@ class Game:
         self.text(f"Day {self.day}   {hrs:02d}:{mins:02d} {'Night' if self.is_night() else 'Day'}{wtxt}", (16, y + 2), 20,
                   (220, 220, 240))
         y += 26
+        f = self.forest_here()
+        if f is not None:
+            self.text(f"Forest: {FORESTS[f][0]}", (16, y), 20, (150, 230, 140))
+            y += 24
         # quest
         desc, stat, amt, c, g, _ = self.cur_quest()
         prog = clamp(self.stats.get(stat, 0) - self.quest_base, 0, amt)
@@ -2671,7 +2791,7 @@ class Game:
         bag = f"Bag {self.count(self.bag)}/{self.bag_cap()}"
         self.text(f"{bag}    Seed: {seed} x{self.seeds.get(seed, 0)} [Z]    Rod: {RODS[self.tools['rod']][0]}    "
                   f"Weapon: {WEAPONS[self.tools['weapon']][0]}", (16, H - 54), 20, (230, 230, 240))
-        self.text("WASD move | E use | Hold F fish | Hold Q dig | Click hunt | R eat | B campfire | Esc pause",
+        self.text("WASD move | E use | Left click spear | Right click chop/mine/axe | F fish | Q dig | R eat | Esc",
                   (16, H - 28), 19, (190, 190, 210))
         # minimap
         mw, mh = self.mini.get_size()
@@ -2681,6 +2801,8 @@ class Game:
         pygame.draw.circle(sc, WHITE, (mx + int(self.px / TS * 1.5), my + int(self.py / TS * 1.5)), 4)
         pygame.draw.circle(sc, RED, (mx + int(self.px / TS * 1.5), my + int(self.py / TS * 1.5)), 3)
         tg = self.poi["cook"] if self.waypoint else self.quest_target()
+        for n in self.npcs:
+            pygame.draw.circle(sc, (120, 200, 255), (mx + int(n["x"] / TS * 1.5), my + int(n["y"] / TS * 1.5)), 3)
         for d in self.diners:
             pygame.draw.circle(sc, ORANGE, (mx + int(d["x"] / TS * 1.5), my + int(d["y"] / TS * 1.5)), 3)
         if tg:
