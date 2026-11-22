@@ -304,6 +304,8 @@ ANCIENT_REGROW = 2.5   # weight of an Ancient Tree when a stump regrows (about 1
 def forest_of(x, y):
     return min(range(len(FORESTS)), key=lambda i: (x - FORESTS[i][1]) ** 2 + (y - FORESTS[i][2]) ** 2)
 NPC_TIME = 300.0
+SWIM_AIR_SECONDS = 60.0   # a full oxygen bar lasts this long while swimming in deep water
+DIVE_EXTRA_OXY = 1.6      # extra oxygen per second while holding Q to dive (about 30s of diving per breath)
 DINER_PATIENCE = 240.0
 HOLE_TIME = 20.0
 
@@ -529,6 +531,9 @@ class Game:
     def sell_mult(self):
         m = (1 + self.pb("sell")) * (1.5 if self.vip else 1) * (1.25 if self.has("surv4") else 1)
         return m * (2 if self.boosts["coins"] > 0 else 1)
+
+    def oxy_mult(self):
+        return (2 if self.has("surv2") else 1) * (1 + self.pb("oxygen"))
 
     def bag_cap(self):
         return BAGS[self.tools["bag"]][3]
@@ -1386,7 +1391,7 @@ class Game:
             self.dig_prog = 0.0
         if t == DEEP:
             self.dig_prog += dt / 3.0
-            self.oxy -= 8 * dt
+            self.oxy -= DIVE_EXTRA_OXY * dt / self.oxy_mult()
             if random.random() < 0.3:
                 self.parts.append([self.px + random.uniform(-8, 8), self.py, 0, -60, 0.6, (200, 230, 255), 3])
             if self.dig_prog >= 1:
@@ -2161,8 +2166,7 @@ class Game:
             self.food = max(0.0, self.food - 100 / 420 * dt * drain)
             self.water = max(0.0, self.water - 100 / 300 * dt * drain)
             if tile == DEEP:
-                omult = (2 if self.has("surv2") else 1) * (1 + self.pb("oxygen"))
-                self.oxy = max(0.0, self.oxy - 100 / (16 * omult) * dt)
+                self.oxy = max(0.0, self.oxy - 100 / (SWIM_AIR_SECONDS * self.oxy_mult()) * dt)
             else:
                 self.oxy = min(100.0, self.oxy + 45 * dt)
             if self.food <= 0:

@@ -217,6 +217,7 @@ const DINER_PATIENCE = 240, HOLE_TIME = 20;
 function matches(s, spec) { const it = ITEMS[s.name]; if (!it.tags.has(spec)) return false; return !(spec === "fillet" && it.tags.has("fish") && (ridx(it.rarity) >= 3 || s.mut)); }
 const ingLabel = spec => spec === "fillet" ? "fish" : spec;
 const NPC_TIME = 300;
+const SWIM_AIR_SECONDS = 60, DIVE_EXTRA_OXY = 1.6; // full air lasts 60s swimming, about 30s while diving
 const FORESTS = WORLD.forests, ANCIENT_REGROW = WORLD.ancientRegrow;
 const forestOf = (x, y) => { let best = 0, bd = 1e9; FORESTS.forEach((f, i) => { const d = (x - f[1])**2 + (y - f[2])**2; if (d < bd) { bd = d; best = i; } }); return best; };
 
@@ -319,6 +320,7 @@ class Game {
   fishLuck() { return RODS[this.tools.rod][3] + 0.2*this.hn("fish1") + 0.6*this.hn("fish4") + this.pb("fish_luck") + this.luckAll(); }
   digLuck() { return SHOVELS[this.tools.shovel][4] + 0.3*this.hn("dig2") + 0.8*this.hn("dig4") + this.pb("dig_luck") + this.luckAll(); }
   sellMult() { return (1 + this.pb("sell")) * (this.vip ? 1.5 : 1) * (this.has("surv4") ? 1.25 : 1) * (this.boosts.coins > 0 ? 2 : 1); }
+  oxyMult() { return (this.has("surv2") ? 2 : 1)*(1 + this.pb("oxygen")); }
   bagCap() { return BAGS[this.tools.bag][3]; }
   count(lst) { let n = 0; for (const s of lst) n += s.count; return n; }
   rollRarity(luck, av=[0,1,2,3,4,5]) { return choices(av, av.map(i => RW[i]*(1 + luck*i*0.6))); }
@@ -666,7 +668,7 @@ class Game {
     if (!this.keys.has("KeyQ") || this.fish) { this.digProg = Math.max(0, this.digProg - dt); return; }
     if (this.digTile !== key(tx, ty)) { this.digTile = key(tx, ty); this.digProg = 0; }
     if (t === DEEP) {
-      this.digProg += dt/3; this.oxy -= 8*dt;
+      this.digProg += dt/3; this.oxy -= DIVE_EXTRA_OXY*dt/this.oxyMult();
       if (rnd() < 0.3) this.parts.push([this.px + uniform(-8, 8), this.py, 0, -60, 0.6, [200,230,255], 3]);
       if (this.digProg >= 1) { this.digProg = 0; this.finishDig(tx, ty, true); }
     } else if ((t === GRASS || t === SAND || t === CAVE) && !this.holes.has(key(tx, ty))) {
@@ -991,7 +993,7 @@ class Game {
     if (!busy) {
       const drain = (this.has("surv1") ? 0.7 : 1)*(1 - Math.min(0.8, this.pb("hunger")));
       this.food = Math.max(0, this.food - 100/420*dt*drain); this.water = Math.max(0, this.water - 100/300*dt*drain);
-      if (tile === DEEP) this.oxy = Math.max(0, this.oxy - 100/(16*(this.has("surv2") ? 2 : 1)*(1 + this.pb("oxygen")))*dt); else this.oxy = Math.min(100, this.oxy + 45*dt);
+      if (tile === DEEP) this.oxy = Math.max(0, this.oxy - 100/(SWIM_AIR_SECONDS*this.oxyMult())*dt); else this.oxy = Math.min(100, this.oxy + 45*dt);
       if (this.food <= 0) this.hp -= 1.5*dt; if (this.water <= 0) this.hp -= 2*dt;
       if (this.oxy <= 0) { this.hp -= 12*dt; if (rnd() < 0.05) this.floatText(this.px, this.py-30, "NO AIR!", RED); }
       if (this.food > 40 && this.water > 40 && this.hp < 100) this.hp = Math.min(100, this.hp + (0.8*(this.has("surv3") ? 3 : 1) + this.pb("regen"))*dt);
