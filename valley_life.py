@@ -7,8 +7,7 @@ VALLEY LIFE  -  a playable prototype of a "do everything" survival / collecting 
   run a restaurant, sell to wandering NPCs, hatch RNG pets, buy an upgrade tree, upgrade gear,
   and survive (health / food / water / oxygen).
 
-  The "GEM STORE" uses FAKE placeholder prices. Nothing is ever charged - it is only there to
-  show how a premium-currency shop would work.
+  Everything is bought with coins you earn by playing. There are no real-money purchases.
 
 Run:
     pip install pygame
@@ -140,13 +139,13 @@ ANIMALS = {
     "Golden Stag": dict(hp=80, spd=150, beh="flee", dmg=0, size=15, col=(255, 210, 60), xp=150, w=0.8, night=0.8,
                         drops=[("Golden Antler", 1, 1, 1.0), ("Raw Meat", 3, 3, 1.0)]),
 }
-# name, seed price, grow seconds, sell, colour, gem price, hunger, thirst, rarity
+# name, seed price, grow seconds, sell, colour, (unused), hunger, thirst, rarity
 CROPS = [("Carrot", 5, 20, 10, (255, 140, 40), 0, 6, 2, "Common"), ("Wheat", 8, 30, 14, (230, 200, 100), 0, 4, 0, "Common"),
          ("Corn", 15, 45, 28, (250, 220, 60), 0, 8, 2, "Common"), ("Tomato", 25, 60, 45, (230, 50, 40), 0, 6, 8, "Uncommon"),
          ("Berry", 40, 75, 65, (150, 50, 200), 0, 4, 6, "Uncommon"), ("Pumpkin", 100, 120, 180, (250, 140, 30), 0, 15, 5, "Rare"),
          ("Watermelon", 250, 180, 480, (70, 180, 70), 0, 8, 30, "Rare"),
          ("Dragonfruit", 800, 300, 1600, (240, 60, 150), 0, 12, 12, "Epic"),
-         ("Starfruit", 0, 240, 4500, (255, 240, 80), 40, 20, 20, "Legendary")]
+         ("Starfruit", 2000, 240, 4500, (255, 240, 80), 0, 20, 20, "Legendary")]
 CROP = {c[0]: c for c in CROPS}
 # name, ingredients, hunger, thirst, heal, base value, colour
 RECIPES = [
@@ -164,20 +163,20 @@ GENERIC = {"fillet", "wood", "meat", "veg"}
 QUAL = [("Burnt", 0.5, (90, 70, 60)), ("Good", 1.0, WHITE), ("Perfect", 1.6, GOLD), ("Gourmet", 2.5, PINK)]
 QMULT = {q[0]: q[1] for q in QUAL}
 
-# tools: name, coin price, gem price, stats...
+# tools: name, coin price, (unused), stats...
 RODS = [("Twig Rod", 0, 0, 0.0, 0.27, 1.00), ("Bamboo Rod", 250, 0, 0.15, 0.29, 0.90),
         ("Fiberglass Rod", 1200, 0, 0.35, 0.31, 0.80), ("Carbon Rod", 5000, 0, 0.70, 0.33, 0.70),
-        ("Mythril Rod", 20000, 0, 1.20, 0.36, 0.60), ("Celestial Rod", 0, 400, 2.50, 0.42, 0.45)]
+        ("Mythril Rod", 20000, 0, 1.20, 0.36, 0.60), ("Celestial Rod", 60000, 0, 2.50, 0.42, 0.45)]
 AXES = [("Stone Axe", 0, 0, 1.0), ("Copper Axe", 200, 0, 2.0), ("Iron Axe", 900, 0, 3.5), ("Steel Axe", 4000, 0, 6.0),
-        ("Diamond Axe", 15000, 0, 10.0), ("Plasma Axe", 0, 350, 25.0)]
+        ("Diamond Axe", 15000, 0, 10.0), ("Plasma Axe", 50000, 0, 25.0)]
 PICKS = [("Wooden Pickaxe", 0, 0, 1.0, 0), ("Copper Pickaxe", 300, 0, 2.0, 1), ("Iron Pickaxe", 1500, 0, 3.5, 2),
-         ("Gold Pickaxe", 6000, 0, 6.0, 3), ("Mythril Pickaxe", 25000, 0, 10.0, 4), ("Laser Drill", 0, 400, 25.0, 4)]
+         ("Gold Pickaxe", 6000, 0, 6.0, 3), ("Mythril Pickaxe", 25000, 0, 10.0, 4), ("Laser Drill", 70000, 0, 25.0, 4)]
 SHOVELS = [("Rusty Shovel", 0, 0, 1.0, 0.0), ("Iron Shovel", 400, 0, 1.6, 0.2), ("Steel Shovel", 2000, 0, 2.4, 0.5),
-           ("Golden Shovel", 9000, 0, 3.5, 1.0), ("Mega Digger", 0, 300, 6.0, 2.0)]
+           ("Golden Shovel", 9000, 0, 3.5, 1.0), ("Mega Digger", 30000, 0, 6.0, 2.0)]
 WEAPONS = [("Wooden Spear", 0, 0, 10, 480, 0.7), ("Stone Spear", 250, 0, 18, 520, 0.6), ("Hunting Bow", 1500, 0, 30, 750, 0.45),
-           ("Crossbow", 6000, 0, 55, 850, 0.4), ("Laser Bow", 0, 350, 120, 1100, 0.18)]
+           ("Crossbow", 6000, 0, 55, 850, 0.4), ("Laser Bow", 40000, 0, 120, 1100, 0.18)]
 BAGS = [("Pouch", 0, 0, 25), ("Satchel", 300, 0, 50), ("Rucksack", 1500, 0, 100), ("Explorer Pack", 6000, 0, 200),
-        ("Bottomless Bag", 0, 250, 1000)]
+        ("Bottomless Bag", 25000, 0, 1000)]
 TOOLS = {"rod": ("Rods", RODS), "axe": ("Axes", AXES), "pick": ("Pickaxes", PICKS), "shovel": ("Shovels", SHOVELS),
          "weapon": ("Weapons", WEAPONS), "bag": ("Backpacks", BAGS)}
 
@@ -254,15 +253,16 @@ PETS = [
 PET = {p[0]: p for p in PETS}
 EGGS = [("Common Egg", 500, 0, [60, 30, 9, 1, 0, 0], (235, 230, 210)),
         ("Rare Egg", 3000, 0, [0, 50, 35, 12, 3, 0], (100, 160, 255)),
-        ("Mythic Egg", 0, 120, [0, 0, 40, 40, 17, 3], (255, 90, 200))]
-GEM_PACKS = [(80, "$0.99"), (450, "$4.99"), (1000, "$9.99"), (2200, "$19.99"), (6000, "$49.99"), (14000, "$99.99")]
-GEM_ITEMS = [("luck", "2x Luck Potion", "10 minutes of double luck", 50),
-             ("coins", "2x Coins Potion", "10 minutes of double sell price", 60),
-             ("grow", "Instant Grow", "Finish every crop right now", 25),
-             ("heal", "Full Restore", "Max health, food, water, oxygen", 15),
-             ("slot", "Extra Pet Slot", "Equip one more pet (max 4)", 200),
-             ("vip", "VIP Pass", "Forever +50% coins & a gold crown", 500),
-             ("coinsack", "Coin Sack", "Get 5,000 coins instantly", 100)]
+        ("Mythic Egg", 15000, 0, [0, 0, 40, 40, 17, 3], (255, 90, 200))]
+BOOST_ITEMS = [("luck", "2x Luck Potion", "10 minutes of double luck", 2500),
+               ("coins", "2x Coins Potion", "10 minutes of double sell price", 3000),
+               ("grow", "Instant Grow", "Finish every crop right now", 800),
+               ("heal", "Full Restore", "Max health, food, water, oxygen", 300),
+               ("slot", "Extra Pet Slot", "Equip one more pet (max 4)", 10000),
+               ("vip", "VIP Pass", "Forever +50% coins & a gold crown", 50000)]
+OLD_GEM_VALUE = 40     # old saves: each leftover gem becomes this many coins
+REVIVE_COST = 200
+QUEST_BONUS = 40       # quests list a small "bonus" number; each point is worth this many coins
 SUPPLIES = [("Bandage", 30, 1, "Heals 40 health"), ("Water Bottle", 15, 1, "+50 water"),
             ("Snack Bar", 25, 1, "+30 food"), ("Worm", 20, 5, "5 worms = fishing bait (+luck)")]
 PLOT_PRICES = [150, 300, 600, 1200, 2500, 5000]
@@ -273,7 +273,7 @@ BUYERS = [("Lumber Larry", "wood", (150, 100, 60)), ("Digger Dot", "dig", (200, 
 CAT_ORDER = ["fish", "wood", "ore", "dig", "animal", "crop", "food", "craft", "misc"]
 CATS = [("All", None), ("Fish", "fish"), ("Wood", "wood"), ("Ore", "ore"), ("Dig", "dig"), ("Animal", "animal"),
         ("Crop", "crop"), ("Food", "food"), ("Craft", "craft"), ("Misc", "misc")]
-# description, stat, amount, coins, gems, target
+# description, stat, amount, coins, bonus (x QUEST_BONUS coins), target
 QUESTS = [
     ("Catch a fish! Aim at water, HOLD F, let go", "fish", 1, 50, 5, "river"),
     ("Chop 5 logs: press E at a tree on the GREEN", "logs", 5, 60, 5, "forest"),
@@ -292,7 +292,7 @@ QUESTS = [
 BUILDINGS = [("HOME", "home", 60, 43, 5, 4, (180, 90, 70)), ("SHOP", "shop", 66, 43, 5, 4, (70, 130, 200)),
              ("MARKET", "market", 76, 43, 5, 4, (220, 170, 60)), ("UPGRADES", "skills", 82, 43, 5, 4, (130, 90, 200)),
              ("PET HATCHERY", "pets", 62, 56, 5, 4, (240, 140, 190)), ("KITCHEN", "cook", 76, 56, 6, 4, (200, 80, 60)),
-             ("GEM STORE", "gems", 85, 56, 5, 4, (60, 200, 220)), ("WORKSHOP", "craft", 53, 43, 5, 4, (176, 112, 62))]
+             ("BOOST SHOP", "boosts", 85, 56, 5, 4, (60, 200, 220)), ("WORKSHOP", "craft", 53, 43, 5, 4, (176, 112, 62))]
 TABLES = [(74, 62), (77, 62), (80, 62), (83, 62)]
 # Named forests. Every tree belongs to the nearest forest centre, which decides what grows there.
 # weights are for TREES order: Oak, Pine, Birch, Maple, Ancient (Ancient Trees can turn up in any forest).
@@ -653,7 +653,7 @@ class Game:
                 self.popup("BACKPACK FULL!", ["Your bag can't hold any more loot!",
                                               "Sell at the MARKET, store it at HOME,",
                                               "or get the BOTTOMLESS BAG (1000 slots)!"],
-                           [("Bottomless Bag (250 gems)", lambda: self.buy_tool("bag", 4), PINK),
+                           [(f"Bottomless Bag ({fmt(BAGS[4][1])}c)", lambda: self.buy_tool("bag", 4), PINK),
                             ("Later", None, PANEL3)], RED)
         if n <= 0:
             return 0
@@ -869,7 +869,7 @@ class Game:
     def reset_state(self):
         self.px, self.py = self.spawn
         self.hp = self.food = self.water = self.oxy = 100.0
-        self.coins, self.gems, self.level, self.xp = 50, 25, 1, 0.0
+        self.coins, self.gems, self.level, self.xp = 50, 0, 1, 0.0   # gems are no longer used (old saves convert)
         self.bag, self.chest, self.chest_cap = [], [], 100
         self.tools = dict(rod=0, axe=0, pick=0, shovel=0, weapon=0, bag=0)
         self.skills, self.discovered, self.charms = set(), set(), set()
@@ -921,19 +921,20 @@ class Game:
             self.reset_state()
             self.had_save = False
         self.title = False
-        if not self.starter_bought:
-            self.popup("STARTER PACK  -90% !!!", ["500 GEMS + Bamboo Rod + 1,000 coins", "Normally $9.99 ... TODAY ONLY $0.99",
-                                                  "(Fake demo price - nothing is ever charged)"],
-                       [("GET IT! (pretend $0.99)", self.buy_starter, PINK), ("Maybe later", None, PANEL3)], PINK)
+        if self.gems > 0:   # saves from before coins-only: turn old gems into coins
+            bonus = self.gems * OLD_GEM_VALUE
+            self.coins += bonus
+            self.gems = 0
+            self.popup("GEMS ARE NOW COINS", ["Everything costs coins now, so your old gems", f"were turned into {fmt(bonus)} coins!"],
+                       [("NICE!", None, GREEN)], GOLD)
         today = datetime.date.today()
         if self.last_daily != str(today):
             yest = str(today - datetime.timedelta(days=1))
             self.streak = self.streak + 1 if self.last_daily == yest else 1
             self.last_daily = str(today)
             s = min(self.streak, 7)
-            self.coins += 100 * s
-            self.gems += 5 * s
-            self.popup(f"DAILY REWARD - DAY {self.streak}!", [f"+{100 * s} coins   +{5 * s} gems",
+            self.coins += 300 * s
+            self.popup(f"DAILY REWARD - DAY {self.streak}!", [f"+{300 * s} coins",
                                                               "Come back tomorrow for an even bigger reward!"],
                        [("COLLECT!", None, GREEN)], GOLD)
         if not self.had_save:
@@ -948,31 +949,9 @@ class Game:
                                    "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear",
                                    "R - eat best food",
                                    "C - crafting menu (craft at the WORKSHOP)   B - campfire   Z - change seed",
-                                   "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
+                                   "TAB - backpack   K - upgrades   P - pets   G - boost shop   H - help",
                                    "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"],
                    [("LET'S GO!", None, GREEN)], CYAN)
-
-    def buy_starter(self):
-        def ok():
-            self.gems += 500
-            self.coins += 1000
-            self.tools["rod"] = max(self.tools["rod"], 1)
-            self.starter_bought = True
-            self.do_banner("STARTER PACK!", "+500 gems  +1,000 coins  +Bamboo Rod", PINK)
-        self.fake_buy("$0.99", "Starter Pack", ok)
-
-    def fake_buy(self, price, what, fn):
-        def go():
-            fn()
-            self.note("Fake purchase done - no money was used!", GREEN)
-        self.popup("DEMO STORE - NOT REAL MONEY", [f"Item: {what}", f"Pretend price: {price}",
-                                                     "This prototype has no real payments.", "Nothing will be charged. Ever."],
-                   [("Pretend to buy!", go, GREEN), ("Cancel", None, PANEL3)], CYAN)
-
-    def need_gems(self, cost):
-        self.popup("NOT ENOUGH GEMS!", [f"You need {cost} gems but you only have {self.gems}.",
-                                        "Get more in the GEM STORE!"],
-                   [("Open Gem Store", lambda: self.open_menu("gems"), PINK), ("Cancel", None, PANEL3)], PINK)
 
     def open_menu(self, m):
         self.menu = m
@@ -993,9 +972,9 @@ class Game:
         while self.xp >= self.xp_need():
             self.xp -= self.xp_need()
             self.level += 1
-            self.gems += 5
+            self.coins += 50 * self.level
             self.hp = 100
-            self.do_banner(f"LEVEL {self.level}!", "+5 gems  -  new upgrades unlocked!", CYAN)
+            self.do_banner(f"LEVEL {self.level}!", f"+{50 * self.level} coins  -  new upgrades unlocked!", CYAN)
             self.burst(self.px, self.py, CYAN, 30, 220)
 
     def make_rq(self):
@@ -1017,9 +996,8 @@ class Game:
     def check_quest(self):
         desc, stat, amt, c, g, _ = self.cur_quest()
         if self.stats.get(stat, 0) - self.quest_base >= amt:
-            self.coins += c
-            self.gems += g
-            self.do_banner("QUEST COMPLETE!", f"+{c} coins   +{g} gems", GREEN)
+            self.coins += c + g * QUEST_BONUS
+            self.do_banner("QUEST COMPLETE!", f"+{fmt(c + g * QUEST_BONUS)} coins", GREEN)
             self.burst(self.px, self.py, GOLD, 30, 200)
             if self.quest_i < len(QUESTS):
                 self.quest_i += 1
@@ -1045,11 +1023,11 @@ class Game:
             self.shake = 0.25 + 0.15 * (ri - 3)
             self.burst(x, y, RCOL[RAR[ri]], 25 + ri * 8, 260)
         if ri == 4:
-            self.gems += 5
-            self.note("Legendary bonus: +5 gems!", GOLD)
+            self.coins += 250
+            self.note("Legendary bonus: +250 coins!", GOLD)
         if ri == 5:
-            self.gems += 25
-            self.note("MYTHIC bonus: +25 gems!!!", PINK)
+            self.coins += 1500
+            self.note("MYTHIC bonus: +1,500 coins!!!", PINK)
 
     # ------------------------------------------------------------ context / interact
     def near_building(self):
@@ -1511,7 +1489,7 @@ class Game:
                     self.note(f"Found a {c[0]} seed!", GREEN)
                 p["crop"], p["prog"] = None, 0.0
         else:
-            self.note(f"{p['crop']} is {int(p['prog'] * 100)}% grown. Patience!  (or Instant Grow in GEM STORE)")
+            self.note(f"{p['crop']} is {int(p['prog'] * 100)}% grown. Patience!  (or Instant Grow in the BOOST SHOP)")
 
     def grow_mult(self):
         return ((1.3 if self.has("farm1") else 1) * (2 if self.has("farm4") else 1) * (1 + self.pb("grow"))
@@ -1650,7 +1628,7 @@ class Game:
         cnt = random.randint(5, 12) if cat == "wood" else random.randint(1, 2) if cat == "food" else random.randint(2, 5)
         reward = int(ITEMS[item]["base"] * cnt * 1.8 + 25)
         sx = random.choice([51 * TS, 92 * TS])
-        n = dict(pal=pal, name=name, cat=cat, item=item, cnt=cnt, reward=reward, gems=random.choice([0, 0, 1, 2, 3]),
+        n = dict(pal=pal, name=name, cat=cat, item=item, cnt=cnt, reward=reward + random.choice([0, 0, 40, 80, 120]),
                  col=col, x=float(sx), y=52.9 * TS, tx=float(sx), ty=52.9 * TS, state="roam", timer=NPC_TIME, pause=0.0, msg="")
         self.npc_pick_target(n)
         self.npcs.append(n)
@@ -1678,10 +1656,9 @@ class Game:
             return
         self.take(n["item"], n["cnt"])
         self.coins += n["reward"]
-        self.gems += n["gems"]
         self.inc("orders")
         self.gain_xp(20)
-        self.note(f"{n['name']} paid you {n['reward']} coins" + (f" + {n['gems']} gems!" if n["gems"] else "!"), GOLD)
+        self.note(f"{n['name']} paid you {n['reward']} coins!", GOLD)
         self.float_text(n["x"], n["y"] - 40, "THANK YOU!!", GOLD, 28)
         self.burst(n["x"], n["y"], GOLD, 16, 140)
         n["state"], n["timer"], n["msg"] = "leave", 2.5, "Thanks!"
@@ -2009,11 +1986,11 @@ class Game:
         lost = int(self.coins * 0.1)
 
         def revive():
-            if self.gems < 10:
-                self.need_gems(10)
+            if self.coins < REVIVE_COST:
+                self.note("Not enough coins to revive!", RED)
                 respawn()
                 return
-            self.gems -= 10
+            self.coins -= REVIVE_COST
             self.hp, self.food, self.water, self.oxy = 100.0, 80.0, 80.0, 100.0
             self.note("Revived on the spot!", PINK)
 
@@ -2024,36 +2001,24 @@ class Game:
         self.hp = 1
         self.fish = None
         self.popup("YOU FAINTED!", ["You ran out of health!", f"Respawn at home and lose {lost} coins...",
-                                     "...or REVIVE right here for 10 gems!"],
-                   [("REVIVE (10 gems)", revive, PINK), ("Respawn at home", respawn, PANEL3)], RED)
+                                     f"...or REVIVE right here for {REVIVE_COST} coins!"],
+                   [(f"REVIVE ({REVIVE_COST} coins)", revive, PINK), ("Respawn at home", respawn, PANEL3)], RED)
 
     # ------------------------------------------------------------ shop actions
     def buy_tool(self, kind, i):
         t = TOOLS[kind][1][i]
-        if t[2]:
-            if self.gems < t[2]:
-                self.need_gems(t[2])
-                return
-            self.gems -= t[2]
-        else:
-            if self.coins < t[1]:
-                self.note("Not enough coins!", RED)
-                return
-            self.coins -= t[1]
+        if self.coins < t[1]:
+            self.note("Not enough coins!", RED)
+            return
+        self.coins -= t[1]
         self.tools[kind] = i
         self.do_banner("NEW GEAR!", t[0], CYAN)
 
     def buy_seed(self, c, n):
-        if c[5]:
-            if self.gems < c[5] * n:
-                self.need_gems(c[5] * n)
-                return
-            self.gems -= c[5] * n
-        else:
-            if self.coins < c[1] * n:
-                self.note("Not enough coins!", RED)
-                return
-            self.coins -= c[1] * n
+        if self.coins < c[1] * n:
+            self.note("Not enough coins!", RED)
+            return
+        self.coins -= c[1] * n
         self.seeds[c[0]] = self.seeds.get(c[0], 0) + n
         self.sel_seed = CROPS.index(c)
         self.note(f"Bought {n} {c[0]} seed{'s' if n > 1 else ''}!", GREEN)
@@ -2116,17 +2081,11 @@ class Game:
             self.do_banner("KA-CHING!", f"+{fmt(total)} coins", GOLD)
 
     def hatch_egg(self, i):
-        name, coins, gems, ws, col = EGGS[i]
-        if gems:
-            if self.gems < gems:
-                self.need_gems(gems)
-                return
-            self.gems -= gems
-        else:
-            if self.coins < coins:
-                self.note("Not enough coins!", RED)
-                return
-            self.coins -= coins
+        name, coins, _, ws, col = EGGS[i]
+        if self.coins < coins:
+            self.note("Not enough coins!", RED)
+            return
+        self.coins -= coins
         ri = random.choices(range(6), ws)[0]
         pet = random.choice([p for p in PETS if ridx(p[1]) == ri])
         self.pets.append(pet[0])
@@ -2141,11 +2100,11 @@ class Game:
         elif len(self.equipped) < self.pet_slots:
             self.equipped.append(i)
         else:
-            self.note("All pet slots full! Unequip one or buy a slot in the GEM STORE.", ORANGE)
+            self.note("All pet slots full! Unequip one or buy a slot in the BOOST SHOP.", ORANGE)
 
-    def gem_item(self, gid, cost):
-        if self.gems < cost:
-            self.need_gems(cost)
+    def boost_item(self, gid, cost):
+        if self.coins < cost:
+            self.note("Not enough coins!", RED)
             return
         if gid == "slot" and self.pet_slots >= 4:
             self.note("You already have the max pet slots!", ORANGE)
@@ -2153,7 +2112,7 @@ class Game:
         if gid == "vip" and self.vip:
             self.note("You already have VIP!", ORANGE)
             return
-        self.gems -= cost
+        self.coins -= cost
         if gid == "luck":
             self.boosts["luck"] += 600
         elif gid == "coins":
@@ -2168,9 +2127,7 @@ class Game:
             self.pet_slots += 1
         elif gid == "vip":
             self.vip = True
-        elif gid == "coinsack":
-            self.coins += 5000
-        self.do_banner("ACTIVATED!", dict((g[0], g[1]) for g in GEM_ITEMS)[gid], PINK)
+        self.do_banner("ACTIVATED!", dict((g[0], g[1]) for g in BOOST_ITEMS)[gid], PINK)
 
     # ------------------------------------------------------------ events
     def handle(self, ev):
@@ -2241,7 +2198,7 @@ class Game:
                                [("Resume", None, GREEN), ("Help", self.show_help, PANEL3),
                                 ("Save & Quit", self.quit, RED)], CYAN)
                 return
-            toggles = {pygame.K_TAB: "inv", pygame.K_g: "gems", pygame.K_k: "skills", pygame.K_p: "pets", pygame.K_c: "craft"}
+            toggles = {pygame.K_TAB: "inv", pygame.K_g: "boosts", pygame.K_k: "skills", pygame.K_p: "pets", pygame.K_c: "craft"}
             if k in toggles:
                 m = toggles[k]
                 if self.menu == m or (m == "inv" and self.menu == "home"):
@@ -2683,7 +2640,7 @@ class Game:
         sx, sy = self.w2s(r.x, r.y)
         self.blit_spr("bld_" + b["name"], sx, sy)
         dx = sx + r.w // 2
-        if b["menu"] == "gems":
+        if b["menu"] == "boosts":
             for i in range(4):
                 a = self.t * 2 + i * 1.57
                 pygame.draw.circle(self.screen, (180, 255, 255), (int(dx + math.cos(a) * 70), int(sy - 30 + math.sin(a) * 18)), 3)
@@ -2723,7 +2680,7 @@ class Game:
         self.text(n["name"], (sx, sy + 12), 18, WHITE, "c")
         if n["state"] == "roam":
             self.bubble(sx, sy - 60, [f"WANT: {n['cnt']}x {n['item']}",
-                                      f"Pays {n['reward']}c" + (f" + {n['gems']} gems" if n["gems"] else "")])
+                                      f"Pays {n['reward']}c"])
             self.icon(n["item"], sx + self.font(18).size(f"WANT: {n['cnt']}x {n['item']}")[0] // 2 + 22, sy - 82, 26)
         elif n["msg"]:
             self.bubble(sx, sy - 60, [n["msg"]])
@@ -2879,7 +2836,7 @@ class Game:
         sc.blit(s, box)
         pygame.draw.rect(sc, GOLD, box, 2, border_radius=8)
         self.text("QUEST", (26, y + 6), 22, GOLD)
-        self.text(f"+{c}c +{g} gems", (box.right - 10, y + 8), 18, (255, 230, 150), "tr")
+        self.text(f"+{fmt(c + g * QUEST_BONUS)} coins", (box.right - 10, y + 8), 18, (255, 230, 150), "tr")
         for i, l in enumerate(lines):
             self.text(l, (26, y + 28 + i * 18), 20)
         by_ = y + 30 + 18 * len(lines)
@@ -2894,13 +2851,6 @@ class Game:
         pygame.draw.circle(sc, GOLD, (r.x + 20, r.centery), 11)
         self.text("c", (r.x + 20, r.centery), 20, (140, 100, 0), "c", False)
         self.text(fmt(self.coins), (r.x + 40, r.centery), 26, GOLD, "ml")
-        r2 = pygame.Rect(0, 0, 170, 36)
-        r2.topright = (r.x - 10, 12)
-        pygame.draw.rect(sc, (20, 22, 36), r2, border_radius=18)
-        pygame.draw.polygon(sc, CYAN, [(r2.x + 20, r2.y + 6), (r2.x + 30, r2.centery), (r2.x + 20, r2.bottom - 6),
-                                       (r2.x + 10, r2.centery)])
-        self.text(fmt(self.gems), (r2.x + 38, r2.centery), 26, CYAN, "ml")
-        self.button((r2.right - 34, r2.y + 4, 28, 28), "+", lambda: self.open_menu("gems"), PINK, size=28)
         # level
         lv = pygame.Rect(0, 0, 350, 22)
         lv.topright = (x, 56)
@@ -2911,7 +2861,7 @@ class Game:
         self.text(f"LEVEL {self.level}   {int(self.xp)}/{self.xp_need()} XP", lv.center, 18, WHITE, "c")
         # menu buttons
         bx = W - 16
-        for label, m, col in (("HELP [H]", None, PANEL3), ("GEMS [G]", "gems", PINK), ("PETS [P]", "pets", (200, 110, 170)),
+        for label, m, col in (("HELP [H]", None, PANEL3), ("BOOSTS [G]", "boosts", PINK), ("PETS [P]", "pets", (200, 110, 170)),
                               ("UPGRADES [K]", "skills", PURPLE), ("CRAFT [C]", "craft", (210, 140, 60)),
                               ("BAG [TAB]", "inv", (70, 140, 200))):
             w = self.font(20).size(label)[0] + 20
@@ -2932,11 +2882,6 @@ class Game:
             lab = (f"RESTAURANT: {n} waiting" if n else "RESTAURANT: no diners") + ("  (arrow on)" if self.waypoint == "cook" else "")
             self.button((W - 296, yy + 4, 280, 30), lab, lambda: setattr(self, "waypoint", None if self.waypoint == "cook" else "cook"),
                         ORANGE if n else PANEL3, size=19)
-            yy += 40
-        if not self.starter_bought and self.starter_left > 0:
-            sl = int(self.starter_left)
-            self.button((W - 236, yy + 4, 220, 32), f"STARTER PACK -90%  {sl // 60}:{sl % 60:02d}",
-                        lambda: self.open_menu("gems"), (210, 60, 150), size=19)
             yy += 40
         # notes
         for i, n in enumerate(reversed(self.notes)):
@@ -3058,7 +3003,7 @@ class Game:
         pygame.draw.rect(self.screen, PANEL, (x, y, w, h), border_radius=16)
         pygame.draw.rect(self.screen, PANEL3, (x, y, w, h), 3, border_radius=16)
         self.text(title, (x + 24, y + 16), 44, GOLD)
-        self.text(f"{fmt(self.coins)} coins    {fmt(self.gems)} gems", (x + w - 70, y + 26), 24, WHITE, "tr")
+        self.text(f"{fmt(self.coins)} coins", (x + w - 70, y + 26), 24, GOLD, "tr")
         self.button((x + w - 56, y + 14, 40, 40), "X", self.close_menu, RED, size=28)
         return x, y, w, h
 
@@ -3082,19 +3027,17 @@ class Game:
                 r = pygame.Rect(x + 20, ry + i * 80, w - 40, 72)
                 cur = self.tools[kind]
                 pygame.draw.rect(self.screen, PANEL2 if i != cur else (40, 80, 60), r, border_radius=10)
-                gem = t[2] > 0
-                self.text(t[0], (r.x + 16, r.y + 10), 30, PINK if gem else WHITE)
+                self.text(t[0], (r.x + 16, r.y + 10), 30, WHITE)
                 self.text(tool_desc(kind, t), (r.x + 16, r.y + 42), 22, (200, 210, 230))
-                price = f"{t[2]} gems" if gem else ("FREE" if t[1] == 0 else f"{fmt(t[1])} coins")
-                self.text(price, (r.right - 200, r.centery), 26, CYAN if gem else GOLD, "mr")
+                price = "FREE" if t[1] == 0 else f"{fmt(t[1])} coins"
+                self.text(price, (r.right - 200, r.centery), 26, GOLD, "mr")
                 if i == cur:
                     self.button((r.right - 170, r.y + 16, 150, 40), "EQUIPPED", None, (40, 120, 70), False)
                 elif i < cur:
                     self.button((r.right - 170, r.y + 16, 150, 40), "OWNED", None, PANEL3, False)
                 else:
-                    can = self.gems >= t[2] if gem else self.coins >= t[1]
                     self.button((r.right - 170, r.y + 16, 150, 40), "BUY", lambda k=kind, i=i: self.buy_tool(k, i),
-                                (PINK if gem else GREEN) if can else (120, 80, 80))
+                                GREEN if self.coins >= t[1] else (120, 80, 80))
         elif self.tab == len(TOOLS):
             for i, c in enumerate(CROPS):
                 r = pygame.Rect(x + 20, ry + i * 56, w - 40, 50)
@@ -3103,8 +3046,7 @@ class Game:
                 self.text(f"{c[0]} seed", (r.x + 50, r.y + 8), 26, RCOL[c[8]])
                 self.text(f"Grows in {c[2]}s   Sells for ~{c[3]}c   You own: {self.seeds.get(c[0], 0)}", (r.x + 50, r.y + 30), 19,
                           (200, 210, 230))
-                price = f"{c[5]} gems" if c[5] else f"{c[1]} coins"
-                self.text(price, (r.right - 260, r.centery), 24, CYAN if c[5] else GOLD, "mr")
+                self.text(f"{fmt(c[1])} coins", (r.right - 260, r.centery), 24, GOLD, "mr")
                 self.button((r.right - 240, r.y + 8, 100, 34), "Buy 1", lambda c=c: self.buy_seed(c, 1), GREEN, size=22)
                 self.button((r.right - 130, r.y + 8, 110, 34), "Buy 5", lambda c=c: self.buy_seed(c, 5), GREEN, size=22)
         else:
@@ -3349,12 +3291,11 @@ class Game:
             chances = [f"{RAR[k][:4]} {p}%" for k, p in enumerate(e[3]) if p]
             self.text("  ".join(chances[:3]), (r.x + 100, r.y + 44), 18, (210, 210, 230))
             self.text("  ".join(chances[3:]), (r.x + 100, r.y + 62), 18, (255, 200, 120))
-            price = f"{e[2]} gems" if e[2] else f"{fmt(e[1])} coins"
-            self.button((r.x + 100, r.y + 86, 280, 40), f"HATCH  ({price})", lambda i=i: self.hatch_egg(i),
-                        PINK if e[2] else GREEN, size=24)
+            self.button((r.x + 100, r.y + 86, 280, 40), f"HATCH  ({fmt(e[1])} coins)", lambda i=i: self.hatch_egg(i),
+                        GREEN, size=24)
         px = x + 440
         self.text(f"YOUR PETS   equipped {len(self.equipped)}/{self.pet_slots}", (px, y + 100), 26, GOLD)
-        self.button((px + 360, y + 96, 240, 32), "+ PET SLOT (200 gems)", lambda: self.gem_item("slot", 200), PINK, size=20)
+        self.button((px + 360, y + 96, 240, 32), "+ PET SLOT (10,000c)", lambda: self.boost_item("slot", 10000), PINK, size=20)
         if not self.pets:
             self.text("No pets yet - hatch an egg!", (px, y + 150), 24, GREY)
         order = sorted(range(len(self.pets)), key=lambda i: (i not in self.equipped, -ridx(PET[self.pets[i]][1])))
@@ -3372,47 +3313,18 @@ class Game:
         if len(order) > 9:
             self.text(f"Scroll for more ({len(order)} pets)", (px, y + h - 30), 18, GREY)
 
-    def menu_gems(self):
-        x, y, w, h = self.panel("GEM STORE")
-        self.text("DEMO ONLY: every price here is FAKE. Nothing is ever charged.", (x + 24, y + 64), 22, (255, 180, 220))
-        top = y + 96
-        if not self.starter_bought:
-            r = pygame.Rect(x + 20, top, w - 40, 76)
-            c = shade((200, 50, 140), 25 * math.sin(self.t * 4))
-            pygame.draw.rect(self.screen, c, r, border_radius=12)
-            sl = int(self.starter_left)
-            self.text("STARTER PACK  -90%!", (r.x + 18, r.y + 10), 34, WHITE)
-            self.text(f"500 gems + Bamboo Rod + 1,000 coins     Offer ends in {sl // 60}:{sl % 60:02d}!", (r.x + 18, r.y + 46), 22,
-                      (255, 230, 250))
-            self.button((r.right - 240, r.y + 16, 220, 44), "$0.99  (fake)", self.buy_starter, GOLD, size=26, tcol=BLACK)
-            top += 90
-        self.text("GET GEMS", (x + 24, top), 28, CYAN)
-        for i, (g, price) in enumerate(GEM_PACKS):
-            cx, cy = x + 20 + (i % 3) * 152, top + 34 + (i // 3) * 170
-            r = pygame.Rect(cx, cy, 144, 160)
+    def menu_boosts(self):
+        x, y, w, h = self.panel("BOOST SHOP")
+        self.text("Spend your coins on boosts and upgrades.", (x + 24, y + 66), 22, (200, 220, 255))
+        for i, (gid, name, desc, cost) in enumerate(BOOST_ITEMS):
+            r = pygame.Rect(x + 20, y + 110 + i * 78, w - 40, 68)
             pygame.draw.rect(self.screen, PANEL2, r, border_radius=12)
-            for k in range(min(5, 1 + i)):
-                gx, gy = r.centerx - 20 + (k % 3) * 20 - (k // 3) * -10, r.y + 34 + (k // 3) * 16
-                pygame.draw.polygon(self.screen, CYAN, [(gx, gy - 12), (gx + 10, gy), (gx, gy + 12), (gx - 10, gy)])
-            self.text(f"{fmt(g)}", (r.centerx, r.y + 82), 32, CYAN, "c")
-            if i == 5:
-                self.text("BEST VALUE!", (r.centerx, r.y + 8), 18, GOLD, "mt")
-            elif i == 2:
-                self.text("POPULAR", (r.centerx, r.y + 8), 18, PINK, "mt")
-            self.button((r.x + 10, r.bottom - 50, r.w - 20, 40), price,
-                        lambda g=g, p=price: self.fake_buy(p, f"{g} gems",
-                                                           lambda: (setattr(self, "gems", self.gems + g),
-                                                                    self.do_banner(f"+{fmt(g)} GEMS!", "", CYAN))),
-                        GREEN, size=24)
-        ix = x + 500
-        self.text("SPEND GEMS", (ix, top), 28, PINK)
-        for i, (gid, name, desc, cost) in enumerate(GEM_ITEMS):
-            r = pygame.Rect(ix, top + 34 + i * 58, w - 520, 52)
-            pygame.draw.rect(self.screen, PANEL2, r, border_radius=10)
-            self.text(name, (r.x + 14, r.y + 6), 24)
-            self.text(desc, (r.x + 14, r.y + 30), 18, (200, 210, 230))
-            self.button((r.right - 130, r.y + 8, 120, 36), f"{cost} gems", lambda gid=gid, c=cost: self.gem_item(gid, c), PINK,
-                        size=22)
+            self.text(name, (r.x + 18, r.y + 10), 30)
+            self.text(desc, (r.x + 18, r.y + 42), 21, (200, 210, 230))
+            owned = (gid == "vip" and self.vip) or (gid == "slot" and self.pet_slots >= 4)
+            self.text(f"{fmt(cost)} coins", (r.right - 200, r.centery), 26, GOLD, "mr")
+            self.button((r.right - 170, r.y + 14, 150, 40), "OWNED" if owned else "BUY", lambda gid=gid, c=cost: self.boost_item(gid, c),
+                        GREEN if self.coins >= cost else (120, 80, 80), not owned, 24)
 
     def menu_cook(self):
         x, y, w, h = self.panel("KITCHEN")
@@ -3574,7 +3486,6 @@ class Game:
         self.button((W // 2 - 160, 360, 320, 74), "CONTINUE" if self.had_save else "PLAY!", self.start, GREEN, size=44)
         if self.had_save:
             self.button((W // 2 - 120, 452, 240, 48), "New game", lambda: self.start(True), PANEL3, size=26)
-        self.text("Gem store prices are FAKE placeholders - no real money, ever.", (W // 2, H - 40), 22, (255, 190, 230), "c")
 
     def draw(self):
         self.buttons = []

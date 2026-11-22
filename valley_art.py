@@ -242,7 +242,7 @@ def building(name, col, w, h, wtile=32):
     wy = bottom - wall_h
     p.poly((0, 0, 0, 70), [(fx + W, bottom), (fx + W + 20, bottom - 10), (fx + W + 20, wy - 10), (fx + W, wy)])
     p.shadow(fx + W / 2 + 8, bottom + 1, W / 2 + 8, 6, 60)
-    wall = (234, 216, 186) if name != "GEM STORE" else (214, 236, 246)
+    wall = (234, 216, 186) if name not in ("GEM STORE", "BOOST SHOP") else (214, 236, 246)
     # wall
     p.orr(wall, fx, wy, W, wall_h, 0, 1.5)
     for yy in range(int(wy) + 9, int(bottom) - 8, 9):
@@ -277,7 +277,7 @@ def building(name, col, w, h, wtile=32):
         p.orr((160, 90, 70), cxm, fy - 52, 16, 30, 2)
         p.rect((120, 64, 50), cxm + 10, fy - 51, 5, 28)
         p.orr((110, 60, 48), cxm - 2, fy - 56, 20, 6, 2)
-    if name == "GEM STORE":
+    if name in ("GEM STORE", "BOOST SHOP"):
         gx, gy = dx, fy - 40
         p.op((90, 230, 245), [(gx, gy - 26), (gx + 15, gy - 8), (gx, gy + 14), (gx - 15, gy - 8)], 1.6)
         p.poly((190, 250, 255), [(gx, gy - 26), (gx, gy + 14), (gx - 15, gy - 8)])

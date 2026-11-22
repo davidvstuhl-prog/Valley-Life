@@ -33,7 +33,7 @@ Every push to this repo rebuilds the Windows `.exe` automatically.
 | R | eat the best food in your bag |
 | B | build a campfire (3 logs) to cook anywhere |
 | Z / mouse wheel | change selected seed |
-| TAB / K / P / G / H | backpack / upgrade tree / pets / gem store / help |
+| TAB / K / P / G / C / H | backpack / upgrade tree / pets / boost shop / crafting / help |
 
 ## What's in it
 
@@ -52,8 +52,7 @@ Every push to this repo rebuilds the Windows `.exe` automatically.
 - **Progression**: levels, an upgrade tree with 28 nodes, 6 gear lines (rods, axes, pickaxes, shovels, weapons, backpacks),
   storage chest, a quest chain with an arrow pointing to the goal, daily login reward
 - **Pets**: 3 eggs, 18 pets in 6 rarities, a hatch animation, equip slots, pet bonuses
-- **Gem store**: premium currency, potions, VIP, a limited-time starter pack. **All real-money prices are fake
-  placeholders. Nothing is ever charged.**
+- **Coins only**: everything (gear, eggs, seeds, boosts, VIP) is bought with coins you earn by playing. No real-money purchases.
 
 ## Files
 

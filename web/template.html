@@ -43,7 +43,7 @@ body {
 </style>
 
 <div id="wrap"><canvas id="game" width="1280" height="720" tabindex="0" aria-label="Valley Life game"></canvas></div>
-<div class="foot">Valley Life prototype. Gem store prices are fake placeholders. No real money, ever. Progress saves in this browser.</div>
+<div class="foot">Valley Life. Everything is bought with coins you earn by playing. Progress saves in this browser.</div>
 
 <script>
 "use strict";
@@ -126,7 +126,7 @@ const ANIMALS = {
 };
 const CROPS = [["Carrot",5,20,10,[255,140,40],0,6,2,"Common"],["Wheat",8,30,14,[230,200,100],0,4,0,"Common"],["Corn",15,45,28,[250,220,60],0,8,2,"Common"],
   ["Tomato",25,60,45,[230,50,40],0,6,8,"Uncommon"],["Berry",40,75,65,[150,50,200],0,4,6,"Uncommon"],["Pumpkin",100,120,180,[250,140,30],0,15,5,"Rare"],
-  ["Watermelon",250,180,480,[70,180,70],0,8,30,"Rare"],["Dragonfruit",800,300,1600,[240,60,150],0,12,12,"Epic"],["Starfruit",0,240,4500,[255,240,80],40,20,20,"Legendary"]];
+  ["Watermelon",250,180,480,[70,180,70],0,8,30,"Rare"],["Dragonfruit",800,300,1600,[240,60,150],0,12,12,"Epic"],["Starfruit",2000,240,4500,[255,240,80],0,20,20,"Legendary"]];
 const CROP = Object.fromEntries(CROPS.map(c => [c[0], c]));
 const RECIPES = [
   ["Grilled Fish",[["fillet",1],["wood",1]],30,0,5,25,[230,160,90]], ["Roast Meat",[["meat",1],["wood",1]],40,0,10,30,[170,80,50]],
@@ -140,12 +140,12 @@ const RECIPES = [
 const GENERIC = new Set(["fillet","wood","meat","veg"]);
 const QUAL = [["Burnt",0.5,[150,110,90]],["Good",1.0,WHITE],["Perfect",1.6,GOLD],["Gourmet",2.5,PINK]];
 const QMULT = {Burnt:0.5, Good:1, Perfect:1.6, Gourmet:2.5};
-const RODS = [["Twig Rod",0,0,0,0.27,1.00],["Bamboo Rod",250,0,0.15,0.29,0.90],["Fiberglass Rod",1200,0,0.35,0.31,0.80],["Carbon Rod",5000,0,0.70,0.33,0.70],["Mythril Rod",20000,0,1.20,0.36,0.60],["Celestial Rod",0,400,2.50,0.42,0.45]];
-const AXES = [["Stone Axe",0,0,1],["Copper Axe",200,0,2],["Iron Axe",900,0,3.5],["Steel Axe",4000,0,6],["Diamond Axe",15000,0,10],["Plasma Axe",0,350,25]];
-const PICKS = [["Wooden Pickaxe",0,0,1,0],["Copper Pickaxe",300,0,2,1],["Iron Pickaxe",1500,0,3.5,2],["Gold Pickaxe",6000,0,6,3],["Mythril Pickaxe",25000,0,10,4],["Laser Drill",0,400,25,4]];
-const SHOVELS = [["Rusty Shovel",0,0,1,0],["Iron Shovel",400,0,1.6,0.2],["Steel Shovel",2000,0,2.4,0.5],["Golden Shovel",9000,0,3.5,1.0],["Mega Digger",0,300,6,2.0]];
-const WEAPONS = [["Wooden Spear",0,0,10,480,0.7],["Stone Spear",250,0,18,520,0.6],["Hunting Bow",1500,0,30,750,0.45],["Crossbow",6000,0,55,850,0.4],["Laser Bow",0,350,120,1100,0.18]];
-const BAGS = [["Pouch",0,0,25],["Satchel",300,0,50],["Rucksack",1500,0,100],["Explorer Pack",6000,0,200],["Bottomless Bag",0,250,1000]];
+const RODS = [["Twig Rod",0,0,0,0.27,1.00],["Bamboo Rod",250,0,0.15,0.29,0.90],["Fiberglass Rod",1200,0,0.35,0.31,0.80],["Carbon Rod",5000,0,0.70,0.33,0.70],["Mythril Rod",20000,0,1.20,0.36,0.60],["Celestial Rod",60000,0,2.50,0.42,0.45]];
+const AXES = [["Stone Axe",0,0,1],["Copper Axe",200,0,2],["Iron Axe",900,0,3.5],["Steel Axe",4000,0,6],["Diamond Axe",15000,0,10],["Plasma Axe",50000,0,25]];
+const PICKS = [["Wooden Pickaxe",0,0,1,0],["Copper Pickaxe",300,0,2,1],["Iron Pickaxe",1500,0,3.5,2],["Gold Pickaxe",6000,0,6,3],["Mythril Pickaxe",25000,0,10,4],["Laser Drill",70000,0,25,4]];
+const SHOVELS = [["Rusty Shovel",0,0,1,0],["Iron Shovel",400,0,1.6,0.2],["Steel Shovel",2000,0,2.4,0.5],["Golden Shovel",9000,0,3.5,1.0],["Mega Digger",30000,0,6,2.0]];
+const WEAPONS = [["Wooden Spear",0,0,10,480,0.7],["Stone Spear",250,0,18,520,0.6],["Hunting Bow",1500,0,30,750,0.45],["Crossbow",6000,0,55,850,0.4],["Laser Bow",40000,0,120,1100,0.18]];
+const BAGS = [["Pouch",0,0,25],["Satchel",300,0,50],["Rucksack",1500,0,100],["Explorer Pack",6000,0,200],["Bottomless Bag",25000,0,1000]];
 const TOOLS = {rod:["Rods",RODS],axe:["Axes",AXES],pick:["Pickaxes",PICKS],shovel:["Shovels",SHOVELS],weapon:["Weapons",WEAPONS],bag:["Backpacks",BAGS]};
 const TOOL_KEYS = Object.keys(TOOLS);
 function toolDesc(kind, t) {
@@ -186,12 +186,11 @@ const PETS = [
   ["Dragon","Legendary",[220,40,40],"all_luck",1.0,"+100% ALL luck"],["Cosmic Cat","Mythic",[140,90,255],"all_luck",2.5,"+250% ALL luck"],
 ];
 const PET = Object.fromEntries(PETS.map(p => [p[0], p]));
-const EGGS = [["Common Egg",500,0,[60,30,9,1,0,0],[235,230,210]],["Rare Egg",3000,0,[0,50,35,12,3,0],[100,160,255]],["Mythic Egg",0,120,[0,0,40,40,17,3],[255,90,200]]];
-const GEM_PACKS = [[80,"$0.99"],[450,"$4.99"],[1000,"$9.99"],[2200,"$19.99"],[6000,"$49.99"],[14000,"$99.99"]];
-const GEM_ITEMS = [["luck","2x Luck Potion","10 minutes of double luck",50],["coins","2x Coins Potion","10 minutes of double sell price",60],
-  ["grow","Instant Grow","Finish every crop right now",25],["heal","Full Restore","Max health, food, water, oxygen",15],
-  ["slot","Extra Pet Slot","Equip one more pet (max 4)",200],["vip","VIP Pass","Forever +50% coins & a gold crown",500],
-  ["coinsack","Coin Sack","Get 5,000 coins instantly",100]];
+const EGGS = [["Common Egg",500,0,[60,30,9,1,0,0],[235,230,210]],["Rare Egg",3000,0,[0,50,35,12,3,0],[100,160,255]],["Mythic Egg",15000,0,[0,0,40,40,17,3],[255,90,200]]];
+const BOOST_ITEMS = [["luck","2x Luck Potion","10 minutes of double luck",2500],["coins","2x Coins Potion","10 minutes of double sell price",3000],
+  ["grow","Instant Grow","Finish every crop right now",800],["heal","Full Restore","Max health, food, water, oxygen",300],
+  ["slot","Extra Pet Slot","Equip one more pet (max 4)",10000],["vip","VIP Pass","Forever +50% coins & a gold crown",50000]];
+const OLD_GEM_VALUE = 40, REVIVE_COST = 200, QUEST_BONUS = 40; // old gems -> coins; revive price; quest bonus points -> coins
 const SUPPLIES = [["Bandage",30,1,"Heals 40 health"],["Water Bottle",15,1,"+50 water"],["Snack Bar",25,1,"+30 food"],["Worm",20,5,"5 worms = fishing bait (+luck)"]];
 const PLOT_PRICES = [150,300,600,1200,2500,5000];
 const BUYERS = [["Lumber Larry","wood",[150,100,60]],["Digger Dot","dig",[200,160,90]],["Miner Mo","ore",[120,120,140]],["Hungry Hank","food",[220,120,80]],
@@ -209,7 +208,7 @@ const QUESTS = [
 const TOUCH_QUEST = {0:"Catch a fish! Stand by water, HOLD the FISH button, let go", 1:"Chop 5 logs: tap USE at a tree on the GREEN",
   2:"Dig up 3 things: HOLD the DIG button on grass", 4:"Plant a seed: tap USE on a garden plot", 5:"Hunt an animal: tap HUNT, or USE up close for your axe"};
 const BUILDINGS = [["HOME","home",60,43,5,4,[180,90,70]],["SHOP","shop",66,43,5,4,[70,130,200]],["MARKET","market",76,43,5,4,[220,170,60]],
-  ["UPGRADES","skills",82,43,5,4,[130,90,200]],["PET HATCHERY","pets",62,56,5,4,[240,140,190]],["KITCHEN","cook",76,56,6,4,[200,80,60]],["GEM STORE","gems",85,56,5,4,[60,200,220]],["WORKSHOP","craft",53,43,5,4,[176,112,62]]];
+  ["UPGRADES","skills",82,43,5,4,[130,90,200]],["PET HATCHERY","pets",62,56,5,4,[240,140,190]],["KITCHEN","cook",76,56,6,4,[200,80,60]],["BOOST SHOP","boosts",85,56,5,4,[60,200,220]],["WORKSHOP","craft",53,43,5,4,[176,112,62]]];
 const TABLES = [[74,62],[77,62],[80,62],[83,62]];
 const DINER_PATIENCE = 240, HOLE_TIME = 20;
 // Does this bag stack count as ingredient `spec`? Rare (Epic+) or mutated fish are never cooked automatically.
@@ -349,7 +348,7 @@ class Game {
       if (this.t - this.lastFullOffer > 180 && this.tools.bag < 4) {
         this.lastFullOffer = this.t;
         this.popup("BACKPACK FULL!", ["Your bag can't hold any more loot!", "Sell at the MARKET, store it at HOME,", "or get the BOTTOMLESS BAG (1000 slots)!"],
-          [["Bottomless Bag (250 gems)", () => this.buyTool("bag", 4), PINK], ["Later", null, PANEL3]], RED);
+          [[`Bottomless Bag (${fmt(BAGS[4][1])}c)`, () => this.buyTool("bag", 4), PINK], ["Later", null, PANEL3]], RED);
       }
     }
     if (n <= 0) return 0;
@@ -407,7 +406,7 @@ class Game {
   // -------------------------------------------------------------- state / save
   reset() {
     [this.px, this.py] = this.spawn; this.hp = this.food = this.water = this.oxy = 100;
-    this.coins = 50; this.gems = 25; this.level = 1; this.xp = 0; this.bag = []; this.chest = []; this.chestCap = 100;
+    this.coins = 50; this.gems = 0; this.level = 1; this.xp = 0; this.bag = []; this.chest = []; this.chestCap = 100;
     this.tools = {rod:0, axe:0, pick:0, shovel:0, weapon:0, bag:0}; this.skills = new Set(); this.discovered = new Set(); this.charms = new Set();
     this.pets = []; this.equipped = []; this.petSlots = 1; this.seeds = {Carrot: 5, Wheat: 3};
     this.plots = Array.from({length: 12}, () => ({crop: null, prog: 0})); this.plotsUnlocked = 6;
@@ -430,14 +429,14 @@ class Game {
     if (!this.inputMode) { this.askInput(() => this.start(fresh)); return; }
     if (fresh) { this.reset(); this.hadSave = false; }
     this.title = false; canvas.focus();
-    if (!this.starterBought) this.popup("STARTER PACK  -90% !!!", ["500 GEMS + Bamboo Rod + 1,000 coins", "Normally $9.99 ... TODAY ONLY $0.99", "(Fake demo price - nothing is ever charged)"],
-      [["GET IT! (pretend $0.99)", () => this.buyStarter(), PINK], ["Maybe later", null, PANEL3]], PINK);
+    if (this.gems > 0) { const bonus = this.gems*OLD_GEM_VALUE; this.coins += bonus; this.gems = 0; // saves from before coins-only
+      this.popup("GEMS ARE NOW COINS", ["Everything costs coins now, so your old gems", `were turned into ${fmt(bonus)} coins!`], [["NICE!", null, GREEN]], GOLD); }
     const today = new Date(), ds = d => `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
     const yest = new Date(today.getTime() - 864e5);
     if (this.lastDaily !== ds(today)) {
       this.streak = this.lastDaily === ds(yest) ? this.streak + 1 : 1; this.lastDaily = ds(today);
-      const s = Math.min(this.streak, 7); this.coins += 100*s; this.gems += 5*s;
-      this.popup(`DAILY REWARD - DAY ${this.streak}!`, [`+${100*s} coins   +${5*s} gems`, "Come back tomorrow for an even bigger reward!"], [["COLLECT!", null, GREEN]], GOLD);
+      const s = Math.min(this.streak, 7); this.coins += 300*s;
+      this.popup(`DAILY REWARD - DAY ${this.streak}!`, [`+${300*s} coins`, "Come back tomorrow for an even bigger reward!"], [["COLLECT!", null, GREEN]], GOLD);
     }
     if (!this.hadSave) this.showHelp();
   }
@@ -451,26 +450,20 @@ class Game {
       "LEFT JOYSTICK - walk around", "USE - chop trees (tap on the GREEN), mine, plant, harvest, drink, talk, enter",
       "HOLD FISH near water, let go to cast. Tap FISH when you see the !", "Reeling: HOLD the FISH button (or anywhere) to keep the fish in the green",
       "HOLD DIG - dig up treasure (or dive in deep water)", "HUNT - throw your spear at the nearest animal    EAT - eat your best food",
-      "Tap the buttons at the top for your BAG, UPGRADES, PETS and GEMS", "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"] : [
+      "Tap the buttons at the top for your BAG, CRAFT, UPGRADES, PETS and BOOSTS", "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"] : [
       "WASD / Arrows - walk      SHIFT - sprint", "E - use stuff: chop tree, mine rock, plant/harvest, drink, talk, enter",
       "HOLD F, aim with mouse, let go - cast rod.  Press F/SPACE on the  !", "Reeling: HOLD SPACE or mouse - keep the fish in the green box",
       "HOLD Q - dig up treasure (or dive for loot in deep water)", "LEFT CLICK - chop / mine / axe animals up close / use    RIGHT CLICK - throw spear", "R - eat best food",
-      "C - crafting menu (craft at the WORKSHOP)   B - campfire   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - gem store   H - help",
+      "C - crafting menu (craft at the WORKSHOP)   B - campfire   Z - change seed", "TAB - backpack   K - upgrades   P - pets   G - boost shop   H - help",
       "Watch your HEALTH, FOOD, WATER and OXYGEN bars!"];
     this.popup("HOW TO PLAY", lines, [["LET'S GO!", null, GREEN]], CYAN);
   }
-  buyStarter() { this.fakeBuy("$0.99", "Starter Pack", () => { this.gems += 500; this.coins += 1000; this.tools.rod = Math.max(this.tools.rod, 1); this.starterBought = true; this.doBanner("STARTER PACK!", "+500 gems  +1,000 coins  +Bamboo Rod", PINK); }); }
-  fakeBuy(price, what, fn) {
-    this.popup("DEMO STORE - NOT REAL MONEY", [`Item: ${what}`, `Pretend price: ${price}`, "This prototype has no real payments.", "Nothing will be charged. Ever."],
-      [["Pretend to buy!", () => { fn(); this.note("Fake purchase done - no money was used!", GREEN); }, GREEN], ["Cancel", null, PANEL3]], CYAN);
-  }
-  needGems(cost) { this.popup("NOT ENOUGH GEMS!", [`You need ${cost} gems but you only have ${this.gems}.`, "Get more in the GEM STORE!"], [["Open Gem Store", () => this.openMenu("gems"), PINK], ["Cancel", null, PANEL3]], PINK); }
   openMenu(m) { this.menu = m; this.tab = 0; this.scroll = 0; this.fish = null; this.sellDlg = null; }
 
   // -------------------------------------------------------------- xp / quests
   xpNeed() { return Math.floor(40 * this.level ** 1.45); }
   gainXp(n) { this.xp += n * (1 + this.pb("xp"));
-    while (this.xp >= this.xpNeed()) { this.xp -= this.xpNeed(); this.level++; this.gems += 5; this.hp = 100; this.doBanner(`LEVEL ${this.level}!`, "+5 gems  -  new upgrades unlocked!", CYAN); this.burst(this.px, this.py, CYAN, 30, 220); } }
+    while (this.xp >= this.xpNeed()) { this.xp -= this.xpNeed(); this.level++; this.coins += 50*this.level; this.hp = 100; this.doBanner(`LEVEL ${this.level}!`, `+${50*this.level} coins  -  new upgrades unlocked!`, CYAN); this.burst(this.px, this.py, CYAN, 30, 220); } }
   makeRq() {
     const opts = [["Catch {} fish","fish",5,15],["Chop {} logs","logs",15,40],["Dig up {} things","digs",8,20],["Mine {} ores","ores",10,30],["Hunt {} animals","kills",3,8],
       ["Harvest {} crops","harvested",10,25],["Cook {} meals","cooked",3,8],["Serve {} diners","served",3,8],["Finish {} NPC orders","orders",2,4]];
@@ -482,7 +475,7 @@ class Game {
   checkQuest() {
     const [, stat, amt, c, g] = this.curQuest();
     if ((this.stats[stat] || 0) - this.questBase >= amt) {
-      this.coins += c; this.gems += g; this.doBanner("QUEST COMPLETE!", `+${c} coins   +${g} gems`, GREEN); this.burst(this.px, this.py, GOLD, 30, 200);
+      this.coins += c + g*QUEST_BONUS; this.doBanner("QUEST COMPLETE!", `+${fmt(c + g*QUEST_BONUS)} coins`, GREEN); this.burst(this.px, this.py, GOLD, 30, 200);
       if (this.questI < QUESTS.length) this.questI++; this.rq = null; const nq = this.curQuest(); this.questBase = this.stats[nq[1]] || 0;
     }
   }
@@ -494,8 +487,8 @@ class Game {
   }
   rareFx(name, ri, x, y) {
     if (ri >= 3) { this.doBanner(`${RAR[ri].toUpperCase()}!!`, name, RCOL[RAR[ri]]); this.shake = 0.25 + 0.15*(ri-3); this.burst(x, y, RCOL[RAR[ri]], 25 + ri*8, 260); }
-    if (ri === 4) { this.gems += 5; this.note("Legendary bonus: +5 gems!", GOLD); }
-    if (ri === 5) { this.gems += 25; this.note("MYTHIC bonus: +25 gems!!!", PINK); }
+    if (ri === 4) { this.coins += 250; this.note("Legendary bonus: +250 coins!", GOLD); }
+    if (ri === 5) { this.coins += 1500; this.note("MYTHIC bonus: +1,500 coins!!!", PINK); }
   }
 
   // -------------------------------------------------------------- context / interact
@@ -705,7 +698,7 @@ class Game {
         if (rnd() < 0.3) { this.seeds[c[0]] = (this.seeds[c[0]] || 0) + 1; this.note(`Found a ${c[0]} seed!`, GREEN); }
         p.crop = null; p.prog = 0;
       }
-    } else this.note(`${p.crop} is ${Math.floor(p.prog*100)}% grown. Patience!  (or Instant Grow in GEM STORE)`);
+    } else this.note(`${p.crop} is ${Math.floor(p.prog*100)}% grown. Patience!  (or Instant Grow in the BOOST SHOP)`);
   }
   growMult() { return (this.has("farm1") ? 1.3 : 1) * (this.has("farm4") ? 2 : 1) * (1 + this.pb("grow")) * (this.rain > 0 ? 1.5 : 1) * (this.charms.has("sprinkler") ? 1.25 : 1); }
 
@@ -769,7 +762,7 @@ class Game {
     else item = choice(Object.keys(ITEMS).filter(n => ITEMS[n].cat === cat && ridx(ITEMS[n].rarity) <= 1 && !["Fish Fillet","Fish Scales","Old Boot","Seaweed"].includes(n)));
     const cnt = cat === "wood" ? randint(5, 12) : cat === "food" ? randint(1, 2) : randint(2, 5);
     const sx = choice([51*TS, 92*TS]);
-    const n = {pal, name, cat, item, cnt, reward: Math.floor(ITEMS[item].base*cnt*1.8 + 25), gems: choice([0,0,1,2,3]), col, x: sx, y: 52.9*TS, tx: sx, ty: 52.9*TS, state: "roam", timer: NPC_TIME, pause: 0, msg: ""};
+    const n = {pal, name, cat, item, cnt, reward: Math.floor(ITEMS[item].base*cnt*1.8 + 25) + choice([0,0,40,80,120]), col, x: sx, y: 52.9*TS, tx: sx, ty: 52.9*TS, state: "roam", timer: NPC_TIME, pause: 0, msg: ""};
     this.npcPickTarget(n); this.npcs.push(n);
     this.note(`${name} is wandering the valley looking for ${cnt}x ${item}! (blue dot on the map)`, [150,210,255]);
   }
@@ -785,8 +778,8 @@ class Game {
   fulfill(n) {
     const have = this.have(n.item);
     if (have < n.cnt) { this.note(`${n.name}: "I need ${n.cnt}x ${n.item}! You have ${have}."`, ORANGE); return; }
-    this.take(n.item, n.cnt); this.coins += n.reward; this.gems += n.gems; this.inc("orders"); this.gainXp(20);
-    this.note(`${n.name} paid you ${n.reward} coins` + (n.gems ? ` + ${n.gems} gems!` : "!"), GOLD);
+    this.take(n.item, n.cnt); this.coins += n.reward; this.inc("orders"); this.gainXp(20);
+    this.note(`${n.name} paid you ${n.reward} coins!`, GOLD);
     this.floatText(n.x, n.y-40, "THANK YOU!!", GOLD, 28); this.burst(n.x, n.y, GOLD, 16, 140);
     n.state = "leave"; n.timer = 2.5; n.msg = "Thanks!";
   }
@@ -931,21 +924,19 @@ class Game {
   die() {
     const lost = Math.floor(this.coins*0.1);
     const respawn = () => { this.coins -= lost; [this.px, this.py] = this.spawn; this.hp = 100; this.food = 60; this.water = 60; this.oxy = 100; };
-    const revive = () => { if (this.gems < 10) { this.needGems(10); respawn(); return; } this.gems -= 10; this.hp = 100; this.food = 80; this.water = 80; this.oxy = 100; this.note("Revived on the spot!", PINK); };
+    const revive = () => { if (this.coins < REVIVE_COST) { this.note("Not enough coins to revive!", RED); respawn(); return; } this.coins -= REVIVE_COST; this.hp = 100; this.food = 80; this.water = 80; this.oxy = 100; this.note("Revived on the spot!", PINK); };
     this.hp = 1; this.fish = null;
-    this.popup("YOU FAINTED!", ["You ran out of health!", `Respawn at home and lose ${lost} coins...`, "...or REVIVE right here for 10 gems!"], [["REVIVE (10 gems)", revive, PINK], ["Respawn at home", respawn, PANEL3]], RED);
+    this.popup("YOU FAINTED!", ["You ran out of health!", `Respawn at home and lose ${lost} coins...`, `...or REVIVE right here for ${REVIVE_COST} coins!`], [[`REVIVE (${REVIVE_COST} coins)`, revive, PINK], ["Respawn at home", respawn, PANEL3]], RED);
   }
 
   // -------------------------------------------------------------- shop actions
   buyTool(kind, i) {
     const t = TOOLS[kind][1][i];
-    if (t[2]) { if (this.gems < t[2]) { this.needGems(t[2]); return; } this.gems -= t[2]; }
-    else { if (this.coins < t[1]) { this.note("Not enough coins!", RED); return; } this.coins -= t[1]; }
+    if (this.coins < t[1]) { this.note("Not enough coins!", RED); return; } this.coins -= t[1];
     this.tools[kind] = i; this.doBanner("NEW GEAR!", t[0], CYAN);
   }
   buySeed(c, n) {
-    if (c[5]) { if (this.gems < c[5]*n) { this.needGems(c[5]*n); return; } this.gems -= c[5]*n; }
-    else { if (this.coins < c[1]*n) { this.note("Not enough coins!", RED); return; } this.coins -= c[1]*n; }
+    if (this.coins < c[1]*n) { this.note("Not enough coins!", RED); return; } this.coins -= c[1]*n;
     this.seeds[c[0]] = (this.seeds[c[0]] || 0) + n; this.selSeed = CROPS.indexOf(c); this.note(`Bought ${n} ${c[0]} seed${n > 1 ? "s" : ""}!`, GREEN);
   }
   buySupply([name, price, n]) { if (this.coins < price) { this.note("Not enough coins!", RED); return; } if (this.addItem(name, ITEMS[name].base, "", "", n)) this.coins -= price; }
@@ -961,24 +952,23 @@ class Game {
     if (total >= 1000) this.doBanner("KA-CHING!", `+${fmt(total)} coins`, GOLD);
   }
   hatchEgg(i) {
-    const [, coins, gems, ws] = EGGS[i];
-    if (gems) { if (this.gems < gems) { this.needGems(gems); return; } this.gems -= gems; }
-    else { if (this.coins < coins) { this.note("Not enough coins!", RED); return; } this.coins -= coins; }
+    const [, coins, , ws] = EGGS[i];
+    if (this.coins < coins) { this.note("Not enough coins!", RED); return; } this.coins -= coins;
     const ri = choices([0,1,2,3,4,5], ws), pet = choice(PETS.filter(p => ridx(p[1]) === ri));
     this.pets.push(pet[0]); if (this.equipped.length < this.petSlots) this.equipped.push(this.pets.length-1); this.inc("hatched");
     this.hatch = {egg: i, t: 0, pet: pet[0], roll: [...Array.from({length: 28}, () => choice(PETS)[0]), pet[0]], fx: false};
   }
-  togglePet(i) { const k = this.equipped.indexOf(i); if (k >= 0) this.equipped.splice(k, 1); else if (this.equipped.length < this.petSlots) this.equipped.push(i); else this.note("All pet slots full! Unequip one or buy a slot in the GEM STORE.", ORANGE); }
-  gemItem(gid, cost) {
-    if (this.gems < cost) { this.needGems(cost); return; }
+  togglePet(i) { const k = this.equipped.indexOf(i); if (k >= 0) this.equipped.splice(k, 1); else if (this.equipped.length < this.petSlots) this.equipped.push(i); else this.note("All pet slots full! Unequip one or buy a slot in the BOOST SHOP.", ORANGE); }
+  boostItem(gid, cost) {
+    if (this.coins < cost) { this.note("Not enough coins!", RED); return; }
     if (gid === "slot" && this.petSlots >= 4) { this.note("You already have the max pet slots!", ORANGE); return; }
     if (gid === "vip" && this.vip) { this.note("You already have VIP!", ORANGE); return; }
-    this.gems -= cost;
+    this.coins -= cost;
     if (gid === "luck") this.boosts.luck += 600; else if (gid === "coins") this.boosts.coins += 600;
     else if (gid === "grow") { for (const p of this.plots) if (p.crop) p.prog = 1; }
     else if (gid === "heal") { this.hp = this.food = this.water = this.oxy = 100; }
-    else if (gid === "slot") this.petSlots++; else if (gid === "vip") this.vip = true; else if (gid === "coinsack") this.coins += 5000;
-    this.doBanner("ACTIVATED!", GEM_ITEMS.find(g => g[0] === gid)[1], PINK);
+    else if (gid === "slot") this.petSlots++; else if (gid === "vip") this.vip = true;
+    this.doBanner("ACTIVATED!", BOOST_ITEMS.find(g => g[0] === gid)[1], PINK);
   }
   openRestaurant() { if (this.coins < 400) { this.note("Need 400 coins to open the restaurant!", RED); return; } this.coins -= 400; this.restaurant = true; this.dinerT = 3; this.doBanner("RESTAURANT OPEN!", "Diners will sit at the tables outside", GOLD); }
 
@@ -998,7 +988,7 @@ class Game {
     if (this.hatch) { if (this.hatch.t > 3.6) this.hatch = null; return; }
     if (this.cook) { if (k === "Space" || k === "KeyE") this.cookStop(); return; }
     if (k === "Escape") { if (this.sellDlg) this.sellDlg = null; else if (this.menu) this.menu = null; else this.pause(); return; }
-    const toggles = {Tab: "inv", KeyG: "gems", KeyK: "skills", KeyP: "pets", KeyC: "craft"};
+    const toggles = {Tab: "inv", KeyG: "boosts", KeyK: "skills", KeyP: "pets", KeyC: "craft"};
     if (toggles[k]) { const m = toggles[k]; if (this.menu === m || (m === "inv" && this.menu === "home")) this.menu = null; else this.openMenu(m); return; }
     if (k === "KeyH") { this.showHelp(); return; }
     if (this.menu) return;
@@ -1020,7 +1010,6 @@ class Game {
     this.tod += dt/360; if (this.tod >= 1) { this.tod -= 1; this.day++; }
     if (this.rain > 0) this.rain -= dt; else { this.nextRain -= dt; if (this.nextRain <= 0) { this.rain = uniform(45, 75); this.nextRain = uniform(150, 260); this.note("It's raining! Crops grow faster, fish bite faster.", BLUE); } }
     for (const b in this.boosts) this.boosts[b] = Math.max(0, this.boosts[b] - dt);
-    if (!this.starterBought) this.starterLeft = Math.max(0, this.starterLeft - dt);
     for (const v of ["atkCd","mineCd","drinkCd","hurt","shake","axeCd","swing"]) this[v] = Math.max(0, this[v] - dt);
     const tile = this.tileAt(this.px, this.py); this.moving = false;
     const reeling = this.fish && this.fish.s === "reel";
@@ -1171,7 +1160,7 @@ class Game {
   drawBuilding(b) {
     const r = b.rect, [sx, sy] = this.w2s(r.x, r.y), dx = sx + r.w/2;
     spr("bld_" + b.name, sx, sy);
-    if (b.menu === "gems") for (let i = 0; i < 4; i++) { const a = this.t*2 + i*1.57; circle(dx + Math.cos(a)*70, sy-30 + Math.sin(a)*18, 3, [180,255,255]); }
+    if (b.menu === "boosts") for (let i = 0; i < 4; i++) { const a = this.t*2 + i*1.57; circle(dx + Math.cos(a)*70, sy-30 + Math.sin(a)*18, 3, [180,255,255]); }
     if (b.menu === "cook" && this.restaurant) text("OPEN!", dx, sy-70, 26, GREEN, "c");
   }
   drawAnimal(a) {
@@ -1191,7 +1180,7 @@ class Game {
     const [sx, sy] = this.w2s(n.x, n.y + 12), moving = n.state === "roam" && n.pause <= 0 && dist(n.x, n.y, n.tx, n.ty) > 3 && dist(n.x, n.y, this.px, this.py) >= 70;
     spr(`p_npc${n.pal}_${moving ? this.dirOf(n.tx - n.x, n.ty - n.y) : "down"}_${this.walkFrame(moving)}`, sx, sy);
     text(n.name, sx, sy+12, 18, WHITE, "c");
-    if (n.state === "roam") { const l0 = `WANT: ${n.cnt}x ${n.item}`; this.bubble(sx, sy-60, [l0, `Pays ${n.reward}c` + (n.gems ? ` + ${n.gems} gems` : "")]); icon(n.item, sx + textW(l0, 18)/2 + 22, sy-82, 26); }
+    if (n.state === "roam") { const l0 = `WANT: ${n.cnt}x ${n.item}`; this.bubble(sx, sy-60, [l0, `Pays ${n.reward}c`]); icon(n.item, sx + textW(l0, 18)/2 + 22, sy-82, 26); }
     else if (n.msg) this.bubble(sx, sy-60, [n.msg]);
   }
   drawDiner(d) {
@@ -1257,18 +1246,16 @@ class Game {
     { const fh = this.forestHere(); if (fh !== null) { text(`Forest: ${FORESTS[fh][0]}`, 16, y, 20, [150,230,140]); y += 24; } }
     const [desc, stat, amt, c, g] = this.curQuest(), prog = clamp((this.stats[stat] || 0) - this.questBase, 0, amt), lines = wrap(desc, 260, 20), qh = 46 + 18*lines.length + 26;
     rrect(16, y, 280, qh, 8, [20,22,36], 0.8); rstroke(16, y, 280, qh, 8, GOLD, 2);
-    text("QUEST", 26, y+6, 22, GOLD); text(`+${c}c +${g} gems`, 286, y+8, 18, [255,230,150], "tr");
+    text("QUEST", 26, y+6, 22, GOLD); text(`+${fmt(c + g*QUEST_BONUS)} coins`, 286, y+8, 18, [255,230,150], "tr");
     lines.forEach((l, i) => text(l, 26, y+28+i*18, 20));
     const by = y + 30 + 18*lines.length; rrect(26, by, 260, 14, 6, [40,40,50]); if (prog) rrect(26, by, 260*prog/amt, 14, 6, GREEN); text(`${Math.floor(prog)}/${amt}`, 156, by+7, 16, WHITE, "c");
     // money
     const rx = W - 16 - 170; rrect(rx, 12, 170, 36, 18, [20,22,36]); circle(rx+20, 30, 11, GOLD); text("c", rx+20, 30, 20, [140,100,0], "c", false); text(fmt(this.coins), rx+40, 30, 26, GOLD, "ml");
-    const gx = rx - 10 - 170; rrect(gx, 12, 170, 36, 18, [20,22,36]); poly([[gx+20, 18], [gx+30, 30], [gx+20, 42], [gx+10, 30]], CYAN); text(fmt(this.gems), gx+38, 30, 26, CYAN, "ml");
-    this.button(gx+170-34, 16, 28, 28, "+", () => this.openMenu("gems"), PINK, true, 28);
     const lx = W - 16 - 350; rrect(lx, 56, 350, 22, 10, [20,22,36]); const xw = 350*this.xp/this.xpNeed(); if (xw > 20) rrect(lx, 56, xw, 22, 10, PURPLE);
     text(`LEVEL ${this.level}   ${Math.floor(this.xp)}/${this.xpNeed()} XP`, lx+175, 67, 18, WHITE, "c");
     let bx = W - 16;
-    for (const [label, m, col] of [["HELP", null, PANEL3], ["GEMS", "gems", PINK], ["PETS", "pets", [200,110,170]], ["UPGRADES", "skills", PURPLE], ["CRAFT", "craft", [210,140,60]], ["BAG", "inv", [70,140,200]]]) {
-      const lab = this.touch ? label : label + " [" + {HELP:"H", GEMS:"G", PETS:"P", UPGRADES:"K", CRAFT:"C", BAG:"TAB"}[label] + "]";
+    for (const [label, m, col] of [["HELP", null, PANEL3], ["BOOSTS", "boosts", PINK], ["PETS", "pets", [200,110,170]], ["UPGRADES", "skills", PURPLE], ["CRAFT", "craft", [210,140,60]], ["BAG", "inv", [70,140,200]]]) {
+      const lab = this.touch ? label : label + " [" + {HELP:"H", BOOSTS:"G", PETS:"P", UPGRADES:"K", CRAFT:"C", BAG:"TAB"}[label] + "]";
       const w = textW(lab, 20) + 20; this.button(bx - w, 86, w, this.touch ? 38 : 30, lab, m ? () => this.openMenu(m) : () => this.showHelp(), col, true, 20); bx -= w + 6;
     }
     if (this.touch) this.button(16 + 230 + 12, 14, 64, 36, "MENU", () => this.pause(), PANEL3, true, 20);
@@ -1277,7 +1264,6 @@ class Game {
     if (this.vip) { text("VIP  +50% coins", W-16, yy, 20, GOLD, "tr"); yy += 22; }
     if (this.restaurant) { const n = this.diners.length, lab = (n ? `RESTAURANT: ${n} waiting` : "RESTAURANT: no diners") + (this.waypoint === "cook" ? "  (arrow on)" : "");
       this.button(W-296, yy+4, 280, 30, lab, () => { this.waypoint = this.waypoint === "cook" ? null : "cook"; }, n ? ORANGE : PANEL3, true, 19); yy += 40; }
-    if (!this.starterBought && this.starterLeft > 0) { const sl = Math.floor(this.starterLeft); this.button(W-236, yy+4, 220, 32, `STARTER PACK -90%  ${Math.floor(sl/60)}:${String(sl%60).padStart(2,"0")}`, () => this.openMenu("gems"), [210,60,150], true, 19); yy += 40; }
     [...this.notes].reverse().forEach((n, i) => text(n[0], W-16, yy+6+i*24, 21, n[1], "tr"));
     const [kind, obj, h0] = this.context(); let hint = h0;
     if (this.fish) hint = this.fish.s === "charge" ? `Let go of ${this.touch ? "FISH" : "F"} to cast!  (GOLD = perfect cast)` : this.fish.s === "wait" ? "Waiting for a bite...  (moving cancels)" : "";
@@ -1335,7 +1321,7 @@ class Game {
   // -------------------------------------------------------------- menus
   panel(title, w=1060, h=640) {
     const x = (W-w)/2, y = (H-h)/2; dim(0.6); rrect(x, y, w, h, 16, PANEL); rstroke(x, y, w, h, 16, PANEL3, 3);
-    text(title, x+24, y+16, 44, GOLD); text(`${fmt(this.coins)} coins    ${fmt(this.gems)} gems`, x+w-70, y+26, 24, WHITE, "tr");
+    text(title, x+24, y+16, 44, GOLD); text(`${fmt(this.coins)} coins`, x+w-70, y+26, 24, GOLD, "tr");
     this.button(x+w-56, y+14, 40, 40, "X", () => { this.menu = null; }, RED, true, 28); return [x, y, w, h];
   }
   tabs(x, y, names, w=124) { names.forEach((n, i) => this.button(x + i*(w+6), y, w, 34, n, () => { this.tab = i; this.scroll = 0; }, i === this.tab ? GOLD : PANEL3, true, 20, i === this.tab ? BLACK : WHITE)); }
@@ -1346,19 +1332,19 @@ class Game {
     if (this.tab < TOOL_KEYS.length) {
       const kind = TOOL_KEYS[this.tab], cur = this.tools[kind];
       TOOLS[kind][1].forEach((t, i) => {
-        const rx = x+20, r_y = ry + i*80, rw = w-40, gem = t[2] > 0;
+        const rx = x+20, r_y = ry + i*80, rw = w-40;
         rrect(rx, r_y, rw, 72, 10, i === cur ? [40,80,60] : PANEL2);
-        text(t[0], rx+16, r_y+10, 30, gem ? PINK : WHITE); text(toolDesc(kind, t), rx+16, r_y+42, 22, [200,210,230]);
-        text(gem ? `${t[2]} gems` : t[1] === 0 ? "FREE" : `${fmt(t[1])} coins`, rx+rw-200, r_y+36, 26, gem ? CYAN : GOLD, "mr");
+        text(t[0], rx+16, r_y+10, 30, WHITE); text(toolDesc(kind, t), rx+16, r_y+42, 22, [200,210,230]);
+        text(t[1] === 0 ? "FREE" : `${fmt(t[1])} coins`, rx+rw-200, r_y+36, 26, GOLD, "mr");
         if (i === cur) this.button(rx+rw-170, r_y+16, 150, 40, "EQUIPPED", null, [40,120,70], false);
         else if (i < cur) this.button(rx+rw-170, r_y+16, 150, 40, "OWNED", null, PANEL3, false);
-        else { const can = gem ? this.gems >= t[2] : this.coins >= t[1]; this.button(rx+rw-170, r_y+16, 150, 40, "BUY", () => this.buyTool(kind, i), can ? (gem ? PINK : GREEN) : [120,80,80]); }
+        else this.button(rx+rw-170, r_y+16, 150, 40, "BUY", () => this.buyTool(kind, i), this.coins >= t[1] ? GREEN : [120,80,80]);
       });
     } else if (this.tab === TOOL_KEYS.length) {
       CROPS.forEach((c, i) => {
         const rx = x+20, r_y = ry + i*56, rw = w-40; rrect(rx, r_y, rw, 50, 10, PANEL2); circle(rx+26, r_y+25, 13, c[4]);
         text(`${c[0]} seed`, rx+50, r_y+8, 26, RCOL[c[8]]); text(`Grows in ${c[2]}s   Sells for ~${c[3]}c   You own: ${this.seeds[c[0]] || 0}`, rx+50, r_y+30, 19, [200,210,230]);
-        text(c[5] ? `${c[5]} gems` : `${c[1]} coins`, rx+rw-260, r_y+25, 24, c[5] ? CYAN : GOLD, "mr");
+        text(`${fmt(c[1])} coins`, rx+rw-260, r_y+25, 24, GOLD, "mr");
         this.button(rx+rw-240, r_y+8, 100, 34, "Buy 1", () => this.buySeed(c, 1), GREEN, true, 22); this.button(rx+rw-130, r_y+8, 110, 34, "Buy 5", () => this.buySeed(c, 5), GREEN, true, 22);
       });
     } else {
@@ -1481,10 +1467,10 @@ class Game {
       text(e[0], rx+100, r_y+12, 30, e[4]);
       const ch = e[3].map((p, k) => p ? `${RAR[k].slice(0, 4)} ${p}%` : null).filter(Boolean);
       text(ch.slice(0, 3).join("  "), rx+100, r_y+44, 18, [210,210,230]); text(ch.slice(3).join("  "), rx+100, r_y+62, 18, [255,200,120]);
-      this.button(rx+100, r_y+86, 280, 40, `HATCH  (${e[2] ? e[2] + " gems" : fmt(e[1]) + " coins"})`, () => this.hatchEgg(i), e[2] ? PINK : GREEN, true, 24);
+      this.button(rx+100, r_y+86, 280, 40, `HATCH  (${fmt(e[1])} coins)`, () => this.hatchEgg(i), GREEN, true, 24);
     });
     const px = x + 440; text(`YOUR PETS   equipped ${this.equipped.length}/${this.petSlots}`, px, y+100, 26, GOLD);
-    this.button(px+360, y+96, 240, 32, "+ PET SLOT (200 gems)", () => this.gemItem("slot", 200), PINK, true, 20);
+    this.button(px+360, y+96, 240, 32, "+ PET SLOT (10,000c)", () => this.boostItem("slot", 10000), PINK, true, 20);
     if (!this.pets.length) text("No pets yet - hatch an egg!", px, y+150, 24, GREY);
     const order = [...this.pets.keys()].sort((a, b) => ((this.equipped.includes(a) ? 0 : 1) - (this.equipped.includes(b) ? 0 : 1)) || (ridx(PET[this.pets[b]][1]) - ridx(PET[this.pets[a]][1])));
     const maxS = Math.max(0, order.length - 8), st = Math.min(this.scroll, maxS);
@@ -1496,26 +1482,14 @@ class Game {
     });
     if (maxS > 0) { text(`${order.length} pets`, px, y+h-36, 18, GREY); this.scrollArrows(px+90, y+h-44, st < maxS); }
   }
-  menu_gems() {
-    const [x, y, w] = this.panel("GEM STORE"); let top = y + 96;
-    text("DEMO ONLY: every price here is FAKE. Nothing is ever charged.", x+24, y+64, 22, [255,180,220]);
-    if (!this.starterBought) {
-      rrect(x+20, top, w-40, 76, 12, shade([200,50,140], 25*Math.sin(this.t*4))); const sl = Math.floor(this.starterLeft);
-      text("STARTER PACK  -90%!", x+38, top+10, 34, WHITE); text(`500 gems + Bamboo Rod + 1,000 coins     Offer ends in ${Math.floor(sl/60)}:${String(sl%60).padStart(2,"0")}!`, x+38, top+46, 22, [255,230,250]);
-      this.button(x+w-260, top+16, 220, 44, "$0.99  (fake)", () => this.buyStarter(), GOLD, true, 26, BLACK); top += 90;
-    }
-    text("GET GEMS", x+24, top, 28, CYAN);
-    GEM_PACKS.forEach(([g, price], i) => {
-      const cx = x+20 + (i%3)*152, cy = top+34 + Math.floor(i/3)*170, rw = 144; rrect(cx, cy, rw, 160, 12, PANEL2);
-      for (let k = 0; k < Math.min(5, 1+i); k++) { const gx = cx + rw/2 - 20 + (k%3)*20 + Math.floor(k/3)*10, gy = cy+34 + Math.floor(k/3)*16; poly([[gx, gy-12], [gx+10, gy], [gx, gy+12], [gx-10, gy]], CYAN); }
-      text(fmt(g), cx + rw/2, cy+82, 32, CYAN, "c");
-      if (i === 5) text("BEST VALUE!", cx + rw/2, cy+8, 18, GOLD, "mt"); else if (i === 2) text("POPULAR", cx + rw/2, cy+8, 18, PINK, "mt");
-      this.button(cx+10, cy+110, rw-20, 40, price, () => this.fakeBuy(price, `${g} gems`, () => { this.gems += g; this.doBanner(`+${fmt(g)} GEMS!`, "", CYAN); }), GREEN, true, 24);
-    });
-    const ix = x + 500; text("SPEND GEMS", ix, top, 28, PINK);
-    GEM_ITEMS.forEach(([gid, name, desc, cost], i) => {
-      const r_y = top+34 + i*58, rw = w-520; rrect(ix, r_y, rw, 52, 10, PANEL2); text(name, ix+14, r_y+6, 24); text(desc, ix+14, r_y+30, 18, [200,210,230]);
-      this.button(ix+rw-130, r_y+8, 120, 36, `${cost} gems`, () => this.gemItem(gid, cost), PINK, true, 22);
+  menu_boosts() {
+    const [x, y, w] = this.panel("BOOST SHOP");
+    text("Spend your coins on boosts and upgrades.", x+24, y+66, 22, [200,220,255]);
+    BOOST_ITEMS.forEach(([gid, name, desc, cost], i) => {
+      const ry = y+110 + i*78, rw = w-40, owned = (gid === "vip" && this.vip) || (gid === "slot" && this.petSlots >= 4);
+      rrect(x+20, ry, rw, 68, 12, PANEL2); text(name, x+38, ry+10, 30); text(desc, x+38, ry+42, 21, [200,210,230]);
+      text(`${fmt(cost)} coins`, x+20+rw-200, ry+34, 26, GOLD, "mr");
+      this.button(x+20+rw-170, ry+14, 150, 40, owned ? "OWNED" : "BUY", () => this.boostItem(gid, cost), this.coins >= cost ? GREEN : [120,80,80], !owned, 24);
     });
   }
   menu_cook() {
@@ -1590,7 +1564,6 @@ class Game {
     this.button(W/2-160, 360, 320, 74, this.hadSave ? "CONTINUE" : "PLAY!", () => this.start(), GREEN, true, 44);
     if (this.hadSave) this.button(W/2-120, 452, 240, 48, "New game", () => this.start(true), PANEL3, true, 26);
     if (this.inputMode) this.button(W/2-120, this.hadSave ? 512 : 452, 240, 40, `Controls: ${this.touch ? "Touch" : "Keyboard"}`, () => this.askInput(null), [60,90,140], true, 22);
-    text("Gem store prices are FAKE placeholders - no real money, ever.", W/2, H-40, 22, [255,190,230], "c");
   }
   draw() {
     this.buttons = []; this.drawWorld();
