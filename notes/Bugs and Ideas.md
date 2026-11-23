@@ -11,10 +11,11 @@ Back to [[Home]]
 
 ## 🐛 Bugs
 - [ ] *(example)* When I ___, the ___ happens, but it should ___
+- [ ] 
 
 ## 💡 Ideas
 - [ ] *(example)* Add a ___
-- [ ] Add more fish and mutations to those fish
+- [ ] Add more fish and mutations to those fish(ex. add 6 diff species of fish and 6 more mutations, 2 good, 2 very good, and 2 super rare but amazing)
 
 ## ✅ Fixed (move items here when done)
 - [x] Fish moved too fast when reeling
