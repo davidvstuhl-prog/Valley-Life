@@ -89,22 +89,11 @@ const isWater = t => t === SHALLOW || t === DEEP;
 const isSolid = t => t === WALL || t === MOUNT;
 
 // ================================================================ data
-const FISH = [
-  ["Minnow","Common",6,0.2,"river",0,"any",[170,180,170]], ["Bluegill","Common",8,0.4,"lake",0,"any",[90,130,200]],
-  ["Perch","Common",10,0.6,"lake river",0,"any",[200,190,80]], ["Sardine","Common",9,0.3,"deep",0,"any",[160,170,190]],
-  ["Cave Blindfish","Common",18,0.5,"cave",0.1,"any",[225,215,225]], ["Seaweed","Common",3,0.3,"river lake deep",-0.2,"any",[60,140,60]],
-  ["Old Boot","Common",2,1.0,"river lake deep",-0.3,"any",[110,80,50]], ["Trout","Uncommon",22,1.2,"river",0.1,"any",[175,140,120]],
-  ["Bass","Uncommon",25,1.8,"lake",0.1,"any",[80,130,70]], ["Mackerel","Uncommon",28,1.0,"deep",0.1,"any",[80,120,170]],
-  ["Glow Shrimp","Uncommon",40,0.1,"cave",0.2,"any",[120,255,220]], ["Salmon","Rare",60,4.0,"river",0.2,"any",[250,130,110]],
-  ["Catfish","Rare",70,6.0,"lake",0.2,"night",[120,105,80]], ["Tuna","Rare",85,12.0,"deep",0.3,"any",[60,80,140]],
-  ["Pike","Rare",65,5.0,"river lake",0.3,"day",[120,150,90]], ["Crystal Eel","Rare",120,2.0,"cave",0.4,"any",[160,220,255]],
-  ["River King","Epic",250,9.0,"river",0.4,"any",[220,170,60]], ["Moonfish","Epic",300,3.0,"lake deep",0.4,"night",[220,220,255]],
-  ["Swordfish","Epic",350,30.0,"deep",0.5,"day",[70,90,160]], ["Magma Koi","Epic",400,4.0,"cave",0.5,"any",[255,100,40]],
-  ["Golden Carp","Legendary",1200,6.0,"river lake",0.6,"any",[255,210,60]], ["Ghost Shark","Legendary",1800,80.0,"deep",0.7,"night",[200,230,255]],
-  ["Lake Serpent","Mythic",8000,150.0,"lake deep",0.9,"any",[60,200,140]], ["Abyss Leviathan","Mythic",12000,400.0,"cave deep",1.0,"night",[130,50,170]],
-];
+const FISH = WORLD.fish; // the fish list comes from valley_life.py via build_web.py
 const MUTS = [["Shiny",1.5,70,[200,255,255]],["Golden",3,22,GOLD],["Rainbow",8,7,PINK],["Cosmic",20,1,PURPLE]];
 const MUTCOL = {Shiny:[200,255,255],Golden:GOLD,Rainbow:PINK,Cosmic:PURPLE,Wet:[120,180,255]};
+const FISH_MUTS = WORLD.fishMuts; // fish-only mutations: name, multiplier, weight, colour, when
+for (const m of FISH_MUTS) MUTCOL[m[0]] = m[3];
 const TREES = [["Oak",4,6,[60,140,55],"Common",50],["Pine",5,8,[35,105,65],"Common",30],["Birch",8,10,[130,185,80],"Uncommon",15],
   ["Maple",18,16,[215,95,40],"Rare",4],["Ancient",150,60,[245,200,60],"Legendary",0.5]];
 const ORES = [["Stone",0,3,3,[135,135,135],"Common",30],["Coal",0,6,5,[45,45,50],"Common",25],["Copper Ore",1,14,8,[215,125,65],"Uncommon",18],
@@ -579,14 +568,18 @@ class Game {
       for (let s = 40; s < 300; s += 12) { const c = wc(this.px + Math.cos(a)*s, this.py + Math.sin(a)*s); if (c) return c; } }
     return null;
   }
+  rollFishMut(chance, zone, night, rain) { // normal mutations plus fish-only ones that depend on where and when you fish
+    const ok = {any: true, cave: zone === "cave", night, rain}, pool = [...MUTS.map(m => [m[0], m[1], m[2]]), ...FISH_MUTS.filter(m => ok[m[4]]).map(m => [m[0], m[1], m[2]])];
+    if (rnd() < chance) { const m = choices(pool, pool.map(x => x[2])); return [m[0], m[1]]; } return ["", 1]; }
   rollFish(zone, perfect, bait) {
-    const night = this.isNight();
-    const cands = FISH.filter(f => f[4].split(" ").includes(zone) && (f[6] === "any" || (f[6] === "night") === night));
+    const night = this.isNight(), rain = this.rain > 0, whenOk = {any: true, night, day: !night, rain};
+    const cands = FISH.filter(f => f[4].split(" ").includes(zone) && whenOk[f[6]]);
     const luck = this.fishLuck() + (perfect ? 0.25 : 0) + (bait ? 0.35 : 0);
     const ri = this.rollRarity(luck, [...new Set(cands.map(f => ridx(f[1])))].sort());
     const f = choice(cands.filter(c => ridx(c[1]) === ri)); const weight = f[3]*lognorm(0.35);
-    const [mut, mm] = this.rollMut(0.05 * (this.has("fish4") ? 2 : 1) * (1 + luck*0.3));
-    return {name: f[0], ri, weight, value: f[2]*(0.7 + 0.3*weight/f[3])*mm, mut, diff: f[5]};
+    const [mut, mm] = this.rollFishMut(0.06 * (this.has("fish4") ? 2 : 1) * (1 + luck*0.3), zone, night, rain);
+    const weight2 = mut === "Giant" ? weight*2.5 : weight;
+    return {name: f[0], ri, weight: weight2, value: f[2]*(0.7 + 0.3*weight/f[3])*mm, mut, diff: f[5]};
   }
   hook() { const f = this.fish, fi = this.rollFish(f.zone, f.perfect, f.bait);
     this.fish = {s: "reel", fish: fi, pos: 0.5, vel: 0, fpos: uniform(0.2, 0.8), ft: 0.5, fnext: 0, prog: 0.3, w: RODS[this.tools.rod][4] + (this.has("fish2") ? 0.05 : 0), bx: f.bx, by: f.by}; }

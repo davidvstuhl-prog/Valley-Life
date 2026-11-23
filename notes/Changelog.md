@@ -6,7 +6,10 @@ tags: [valley-life, changelog]
 Back to [[Home]] · Newest first. Claude adds to this whenever the game changes.
 
 ## 2026-11-23
-- Prepare the itch.io release
+- Added 12 new fish (36 total), including rain-only fish and the mythic Celestial Whale
+- Added 5 fish-only mutations: Albino, Giant, Frozen (cave), Shadow (night), Electric (rain)
+- Added the Obsidian notes vault
+- Prepared the itch.io release
 
 ## 2026-11-22
 - Make the kitchen and restaurant easier, and dig holes vanish faster

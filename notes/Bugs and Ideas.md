@@ -14,9 +14,9 @@ Back to [[Home]]
 
 ## 💡 Ideas
 - [ ] *(example)* Add a ___
-- [ ] Add more fish and mutations to those fish
 
 ## ✅ Fixed (move items here when done)
+- [x] Add more fish and mutations to those fish (12 new fish, 5 new mutations)
 - [x] Fish moved too fast when reeling
 - [x] Fishing spots were finicky
 - [x] PERFECT chop only counted on the edges

@@ -912,7 +912,38 @@ def icon(name, cat, col):
                 p.oc(col, x, y, 7)
                 p.circle(sh(col, 50), x - 2, y - 2, 2.5)
         else:
-            _fish(p, col, "sword" if name == "Swordfish" else "shark" if name == "Ghost Shark" else "fish")
+            if name == "Pufferfish":
+                for k in range(10):
+                    ang = k * math.tau / 10
+                    p.op(sh(col, -30), [(24 + math.cos(ang) * 12, 25 + math.sin(ang) * 12), (24 + math.cos(ang) * 19, 25 + math.sin(ang) * 19),
+                                        (24 + math.cos(ang + 0.25) * 12, 25 + math.sin(ang + 0.25) * 12)], 0.8)
+                p.op(col, [(8, 25), (2, 18), (2, 32)], 1)
+                p.ball(col, 24, 25, 13)
+                p.circle((255, 255, 255), 31, 21, 3)
+                p.circle((30, 24, 30), 31.6, 21.2, 1.7)
+            elif name == "Stormray":
+                p.op(col, [(24, 8), (44, 24), (24, 36), (4, 24)], 1.3)
+                p.poly(sh(col, 40), [(24, 10), (24, 34), (6, 24)])
+                p.ol(sh(col, -30), [(24, 36), (28, 44), (36, 46)], 2, 0.9)
+                p.path((255, 240, 80), [(18, 18), (22, 24), (17, 26), (21, 32)], 1.6)
+            elif name == "Celestial Whale":
+                p.op(col, [(8, 24), (2, 14), (6, 24), (2, 34)], 1.2)
+                p.oe(sh(col, -35), 26, 26, 19, 12)
+                p.ell(col, 25, 24.5, 18, 10.6)
+                p.ell(sh(col, 50), 28, 30, 13, 4)
+                p.circle((30, 24, 30), 38, 22, 1.7)
+                for x, y in ((18, 16), (30, 12), (40, 30)):
+                    p.sparkle(x, y, 3)
+            elif name == "Electric Eel":
+                _fish(p, col, "eel")
+                p.path((255, 255, 255), [(16, 12), (20, 16), (16, 18), (20, 22)], 1.4)
+            else:
+                _fish(p, col, "sword" if name == "Swordfish" else "shark" if name == "Ghost Shark" else "fish")
+                if name == "Koi":
+                    for x, y, r in ((18, 21, 4), (27, 27, 4.5), (33, 21, 3)):
+                        p.circle((255, 120, 40), x, y, r)
+                if name in ("Phoenix Salmon", "Void Angler", "Koi"):
+                    p.sparkle(40, 10, 4)
             if name in ("Golden Carp", "River King", "Moonfish"):
                 p.sparkle(40, 10, 4)
     elif cat == "wood":

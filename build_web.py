@@ -69,6 +69,8 @@ def main(extra_out=None):
         "crafts": V.CRAFTS,
         "charms": V.CHARMS,
         "craftTabs": V.CRAFT_TABS,
+        "fish": V.FISH,
+        "fishMuts": V.FISH_MUTS,
         "ores": [[o["x"], o["y"], o["o"]] for o in game.ores],
     }
     with open(os.path.join(HERE, "web", "template.html"), encoding="utf-8") as fh:

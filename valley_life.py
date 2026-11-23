@@ -99,9 +99,27 @@ FISH = [
     ("Ghost Shark", "Legendary", 1800, 80.0, "deep", 0.7, "night", (200, 230, 255)),
     ("Lake Serpent", "Mythic", 8000, 150.0, "lake deep", 0.9, "any", (60, 200, 140)),
     ("Abyss Leviathan", "Mythic", 12000, 400.0, "cave deep", 1.0, "night", (130, 50, 170)),
+    # --- added later: more fish, including rain-only ones ("rain" = only bites while it's raining)
+    ("Sunfish", "Common", 9, 0.5, "lake", 0.0, "day", (255, 200, 80)),
+    ("Mudskipper", "Common", 12, 0.3, "river lake", 0.05, "rain", (150, 125, 90)),
+    ("Rainbow Trout", "Uncommon", 30, 1.5, "river", 0.15, "any", (230, 140, 170)),
+    ("Pufferfish", "Uncommon", 35, 0.8, "deep", 0.15, "any", (240, 215, 110)),
+    ("Koi", "Rare", 90, 2.5, "lake", 0.25, "day", (245, 240, 230)),
+    ("Lanternfish", "Rare", 95, 0.4, "deep cave", 0.3, "night", (120, 220, 255)),
+    ("Electric Eel", "Rare", 110, 3.0, "river lake", 0.35, "rain", (240, 235, 90)),
+    ("Stormray", "Epic", 420, 25.0, "deep lake", 0.5, "rain", (90, 110, 170)),
+    ("Frost Pike", "Epic", 380, 6.0, "cave", 0.5, "any", (200, 240, 255)),
+    ("Phoenix Salmon", "Legendary", 2200, 8.0, "river", 0.7, "day", (255, 120, 40)),
+    ("Void Angler", "Legendary", 2600, 15.0, "cave deep", 0.75, "night", (80, 50, 120)),
+    ("Celestial Whale", "Mythic", 15000, 800.0, "deep", 1.0, "any", (170, 200, 255)),
 ]
 MUTS = [("Shiny", 1.5, 70, (200, 255, 255)), ("Golden", 3, 22, GOLD), ("Rainbow", 8, 7, PINK), ("Cosmic", 20, 1, PURPLE)]
 MUTCOL = {m[0]: m[3] for m in MUTS}
+# Extra mutations that only fish can get: name, value multiplier, weight, colour, when it can happen
+FISH_MUTS = [("Albino", 2, 25, (250, 250, 250), "any"), ("Giant", 3, 14, (255, 170, 90), "any"),
+             ("Frozen", 4, 20, (170, 230, 255), "cave"), ("Shadow", 5, 14, (110, 70, 170), "night"),
+             ("Electric", 6, 12, (255, 240, 80), "rain")]
+MUTCOL.update({m[0]: m[3] for m in FISH_MUTS})
 MUTCOL.update({"Wet": (120, 180, 255)})
 
 # name, log value, hp, colour, rarity, spawn weight
@@ -599,6 +617,15 @@ class Game:
         av = list(available)
         ws = [RW[i] * (1 + luck * i * 0.6) for i in av]
         return random.choices(av, ws)[0]
+
+    def roll_fish_mut(self, chance, zone, night, rain):
+        """Fish can get the normal mutations plus fish-only ones that depend on where and when you fish."""
+        ok = {"any": True, "cave": zone == "cave", "night": night, "rain": rain}
+        pool = [(m[0], m[1], m[2]) for m in MUTS] + [(m[0], m[1], m[2]) for m in FISH_MUTS if ok[m[4]]]
+        if random.random() < chance:
+            m = random.choices(pool, [x[2] for x in pool])[0]
+            return m[0], m[1]
+        return "", 1.0
 
     def roll_mut(self, chance):
         if random.random() < chance:
@@ -1249,13 +1276,16 @@ class Game:
         return None
 
     def roll_fish(self, zone, perfect, bait):
-        night = self.is_night()
-        cands = [f for f in FISH if zone in f[4].split() and (f[6] == "any" or (f[6] == "night") == night)]
+        night, rain = self.is_night(), self.rain > 0
+        when_ok = {"any": True, "night": night, "day": not night, "rain": rain}
+        cands = [f for f in FISH if zone in f[4].split() and when_ok[f[6]]]
         luck = self.fish_luck() + (0.25 if perfect else 0) + (0.35 if bait else 0)
         ri = self.roll_rarity(luck, sorted(set(ridx(f[1]) for f in cands)))
         f = random.choice([c for c in cands if ridx(c[1]) == ri])
         weight = f[3] * random.lognormvariate(0, 0.35)
-        mut, mm = self.roll_mut(0.05 * (2 if self.has("fish4") else 1) * (1 + luck * 0.3))
+        mut, mm = self.roll_fish_mut(0.06 * (2 if self.has("fish4") else 1) * (1 + luck * 0.3), zone, night, rain)
+        if mut == "Giant":
+            weight *= 2.5
         return dict(name=f[0], ri=ri, weight=weight, value=f[2] * (0.7 + 0.3 * weight / f[3]) * mm, mut=mut, diff=f[5])
 
     def hook(self):

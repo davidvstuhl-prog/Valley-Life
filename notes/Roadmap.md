@@ -25,7 +25,8 @@ Back to [[Home]] · Tick boxes by clicking them.
 - [ ] Credits screen ("Made by ___")
 
 ## 💭 Someday
-- [ ] More fish, crops and pets
+- [x] More fish and mutations
+- [ ] More crops and pets
 - [ ] More biomes (snowy mountain? desert?)
 - [ ] My own art or player models
 - [ ] Achievements
