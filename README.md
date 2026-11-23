@@ -7,6 +7,7 @@ built to show that a game mixing fishing, farming, digging, mining, hunting, coo
 
 - **In your browser:** https://davidvstuhl-prog.github.io/Valley-Life/
 - **Windows download:** https://github.com/davidvstuhl-prog/Valley-Life/releases/latest (get `ValleyLife.exe`)
+- **itch.io:** everything for the itch.io page (zips, cover, screenshots, description, steps) is in [`itch/ITCH_PAGE.md`](itch/ITCH_PAGE.md)
 
 Other ways:
 

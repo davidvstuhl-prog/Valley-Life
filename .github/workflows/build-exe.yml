@@ -33,6 +33,13 @@ jobs:
           path: |
             dist/ValleyLife.exe
             README.md
+      - name: Make the itch.io upload zips
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force itchweb | Out-Null
+          Copy-Item docs/index.html itchweb/index.html
+          Compress-Archive -Path itchweb/* -DestinationPath ValleyLife-web.zip -Force
+          Compress-Archive -Path dist/ValleyLife.exe -DestinationPath ValleyLife-Windows.zip -Force
       - name: Move the "latest" tag to this build
         if: github.ref == 'refs/heads/main'
         shell: bash
@@ -49,5 +56,10 @@ jobs:
             Download **ValleyLife.exe** below and double-click it. No install needed.
             If Windows says "Windows protected your PC", click **More info**, then **Run anyway**.
             Prefer the browser? Play at https://davidvstuhl-prog.github.io/Valley-Life/
-          files: dist/ValleyLife.exe
+
+            (ValleyLife-web.zip and ValleyLife-Windows.zip are the files for itch.io.)
+          files: |
+            dist/ValleyLife.exe
+            ValleyLife-web.zip
+            ValleyLife-Windows.zip
           make_latest: true
