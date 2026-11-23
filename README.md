@@ -46,7 +46,7 @@ Every push to this repo rebuilds the Windows `.exe` automatically.
 - **Map**: mountains around a valley, a river, a lake and a pond, forests, a cave with ore, a town with buildings, garden plots
 - **Survival**: health, food, water and oxygen (swimming) bars; you faint if health hits 0
 - **Fishing**: power-meter cast, bite timing, a reel minigame; 36 fish across river/lake/deep/cave zones (some only bite in the rain),
-  day, night and rain-only fish, weights, 9 mutations (incl. Frozen, Shadow, Electric), worm bait, a list of fish you've found
+  day, night and rain-only fish, weights, 10 mutations (incl. Frozen, Shadow, Electric, Prismatic), worm bait, a list of fish you've found
 - **Woodcutting**: timing-meter chops (PERFECT hits = 3x damage), 5 tree types, rare Ancient trees, trees grow back
 - **Mining**: cave ore with pickaxe tiers (Stone → Mythril)
 - **Digging**: hold-to-dig treasure with luck rolls, sparkle spots, holes that refill; diving uses up oxygen

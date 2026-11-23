@@ -63,7 +63,7 @@ run a restaurant and hatch adorable pets, all while keeping your health, food, w
 
 - **Fish:** cast into rivers, lakes and a hidden cave pool, then reel in 36 kinds of fish, from
   Minnows to the legendary Golden Carp and the mythic Celestial Whale. Some only bite at night, some only
-  in the rain, and rare mutations like Frozen, Shadow and Electric make them worth even more.
+  in the rain, and rare mutations like Frozen, Shadow, Electric and the super-rare Prismatic make them worth even more.
 - **Chop:** six named forests, each with its own trees. Time your swing for a PERFECT hit, and
   watch out for rare glowing **Ancient Trees**.
 - **Mine & dig:** break ore in the cave (a weak pickaxe still works, just slowly), dig up fossils,

@@ -116,9 +116,10 @@ FISH = [
 MUTS = [("Shiny", 1.5, 70, (200, 255, 255)), ("Golden", 3, 22, GOLD), ("Rainbow", 8, 7, PINK), ("Cosmic", 20, 1, PURPLE)]
 MUTCOL = {m[0]: m[3] for m in MUTS}
 # Extra mutations that only fish can get: name, value multiplier, weight, colour, when it can happen
-FISH_MUTS = [("Albino", 2, 25, (250, 250, 250), "any"), ("Giant", 3, 14, (255, 170, 90), "any"),
-             ("Frozen", 4, 20, (170, 230, 255), "cave"), ("Shadow", 5, 14, (110, 70, 170), "night"),
-             ("Electric", 6, 12, (255, 240, 80), "rain")]
+# Tiers: good (Albino, Giant), very good (Frozen, Shadow), super rare but amazing (Electric, Prismatic)
+FISH_MUTS = [("Albino", 2, 25, (250, 250, 250), "any"), ("Giant", 3, 16, (255, 170, 90), "any"),
+             ("Frozen", 6, 9, (170, 230, 255), "cave"), ("Shadow", 7, 8, (110, 70, 170), "night"),
+             ("Electric", 25, 1.2, (255, 240, 80), "rain"), ("Prismatic", 40, 0.5, (255, 140, 230), "any")]
 MUTCOL.update({m[0]: m[3] for m in FISH_MUTS})
 MUTCOL.update({"Wet": (120, 180, 255)})
 

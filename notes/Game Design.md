@@ -24,7 +24,11 @@ Health, food, water, and oxygen (only underwater). Fainting costs 10% of coins, 
 ### Fishing
 Hold F to charge the cast, wait for the **!**, then the reel minigame: keep the fish inside the green box.
 36 fish in 6 rarities. Some only bite at night, some only by day, and some only **in the rain**.
-Mutations: Shiny, Golden, Rainbow, Cosmic, plus fish-only ones: Albino (x2), Giant (x3, extra heavy), Frozen (x4, cave only), Shadow (x5, night only), Electric (x6, rain only). Worms are bait.
+Mutations: Shiny, Golden, Rainbow, Cosmic, plus 6 fish-only ones in three tiers:
+- Good: Albino (x2), Giant (x3, extra heavy)
+- Very good: Frozen (x6, cave only), Shadow (x7, night only)
+- Super rare but amazing: Electric (x25, rain only), Prismatic (x40, anywhere)
+ Worms are bait.
 
 ### Woodcutting
 Timing meter: hit in the green for **PERFECT** (3x damage). 5 tree types plus rare **Ancient Trees**.

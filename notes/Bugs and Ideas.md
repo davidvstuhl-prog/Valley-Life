@@ -11,12 +11,14 @@ Back to [[Home]]
 
 ## 🐛 Bugs
 - [ ] *(example)* When I ___, the ___ happens, but it should ___
+- [ ] 
 
 ## 💡 Ideas
 - [ ] *(example)* Add a ___
 
 ## ✅ Fixed (move items here when done)
-- [x] Add more fish and mutations to those fish (12 new fish, 5 new mutations)
+- [x] Add more fish and mutations to those fish (ex. 6 species, 6 mutations: 2 good, 2 very good, 2 super rare but amazing)
+  - Done: 12 new fish species, and 6 new mutations: Albino & Giant (good), Frozen & Shadow (very good), Electric & Prismatic (super rare, amazing)
 - [x] Fish moved too fast when reeling
 - [x] Fishing spots were finicky
 - [x] PERFECT chop only counted on the edges

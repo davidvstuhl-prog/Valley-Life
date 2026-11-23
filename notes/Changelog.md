@@ -7,7 +7,7 @@ Back to [[Home]] · Newest first. Claude adds to this whenever the game changes.
 
 ## 2026-11-23
 - Added 12 new fish (36 total), including rain-only fish and the mythic Celestial Whale
-- Added 5 fish-only mutations: Albino, Giant, Frozen (cave), Shadow (night), Electric (rain)
+- Added 6 fish-only mutations in 3 tiers: Albino and Giant (good), Frozen and Shadow (very good), Electric and Prismatic (super rare but amazing)
 - Added the Obsidian notes vault
 - Prepared the itch.io release
 
