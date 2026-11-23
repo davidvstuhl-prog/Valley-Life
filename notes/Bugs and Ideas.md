@@ -14,6 +14,7 @@ Back to [[Home]]
 
 ## 💡 Ideas
 - [ ] *(example)* Add a ___
+- [ ] Add more fish and mutations to those fish
 
 ## ✅ Fixed (move items here when done)
 - [x] Fish moved too fast when reeling
