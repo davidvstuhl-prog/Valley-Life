@@ -15,7 +15,7 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] 
+- [ ] fix: axe animation should have the blade of the axe facing the tree
 
 ## ✅ Fixed (move items here when done)
 - [x] Bag opens with I now (Tab is taken by Roblox's player list). The Fish Index moved to F (Roblox)
