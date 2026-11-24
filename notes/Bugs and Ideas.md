@@ -23,6 +23,8 @@ Back to [[Home]]
 - [ ] Fix. The pickaxe animation should be 2 handed like the axe but over the shoulder and downward
 - [ ] Fix: Oxygen lasts to long
 - [ ] Fix: Each garden plot should be a raised 6x6 box with wood sides that look hoed in rows so they are clean and orderly
+- [ ] Fix: Grass is to high, i cant see any animals
+- [ ] 
 - [ ]
 
 ## ✅ Fixed (move items here when done)
