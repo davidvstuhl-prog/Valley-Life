@@ -16,7 +16,7 @@ Back to [[Home]]
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
 - [ ] Fix:The axe animation should not only swing sideways but the axe should be parallel to the ground while swinging
-- [ ] 
+- [ ] Fix: tab as bag no work use i instead
 
 ## ✅ Fixed (move items here when done)
 - [x] Tool animations are slower (each swing hits harder, so chopping and mining take the same time) (Roblox)
