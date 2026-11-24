@@ -15,19 +15,20 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ]  Fix: the fishing model(ie. the minigame art) could be the same as the old browser version of valley life.
-- [ ] Fix: Idk if im just mis timing it but i think the perfect cast was removed
-- [ ] Fix: The chopping animation should be 2 handed and a sideways swing, randomly selecting and angle to swing at
-- [ ] Fix: Things like old boots and seaweed shouldnt count as fish they should be in another category called junk
-- [ ] Fix: The shovel animation should bend the character down, scoop dirt and you should see it being flung away
-- [ ] Fix. The pickaxe animation should be 2 handed like the axe but over the shoulder and downward
-- [ ] Fix: Oxygen lasts to long
-- [ ] Fix: Each garden plot should be a raised 6x6 box with wood sides that look hoed in rows so they are clean and orderly
-- [ ] Fix: Grass is to high, i cant see any animals
 - [ ] 
 - [ ]
 
 ## ✅ Fixed (move items here when done)
+- [x] Fishing minigame art now looks like the old browser version (Roblox)
+- [x] Perfect cast: it was there, but invisible. The power bar now shows a gold PERFECT zone at the end (Roblox)
+- [x] Chopping is a two-handed sideways swing at a random angle (Roblox)
+- [x] Old Boots and Seaweed are "junk", not fish, and don't count in Fish found (Roblox)
+- [x] Shovel: bend down, scoop, and the dirt flies away (Roblox)
+- [x] Pickaxe: two-handed, over the shoulder and down (Roblox)
+- [x] Oxygen now lasts 30 seconds instead of 60 (Roblox)
+- [x] Garden plots are raised 6x6 wooden boxes with hoed rows (Roblox)
+- [x] Grass no longer hides the animals (Roblox)
+- [x] Axe, shovel, pickaxe and spear rebuilt from the sketches in [[Concept Art]] (Roblox)
 - [x] Add more fish and mutations to those fish (ex. 6 species, 6 mutations: 2 good, 2 very good, 2 super rare but amazing)
   - Done: 12 new fish species, and 6 new mutations: Albino & Giant (good), Frozen & Shadow (very good), Electric & Prismatic (super rare, amazing)
 - [x] Fish moved too fast when reeling
