@@ -15,9 +15,9 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] fix: axe animation should have the blade of the axe facing the tree
 
 ## ✅ Fixed (move items here when done)
+- [x] The axe blade faces the tree during the swing (the wrist turns the axe so the blade leads) (Roblox)
 - [x] Bag opens with I now (Tab is taken by Roblox's player list). The Fish Index moved to F (Roblox)
 - [x] The axe stays parallel to the ground while it swings sideways (each swing changes direction and height) (Roblox)
 - [x] Tool animations are slower (each swing hits harder, so chopping and mining take the same time) (Roblox)
