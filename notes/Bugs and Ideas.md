@@ -15,12 +15,12 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] fix: the animations are to fast
-- [ ] Fix: The fishing pole aim spot should not move back and forth while casting. It should only be where the mouse is pointed
-- [ ] Fix: the bag button needs to change to tab
-- [ ] fix: Cntrl should be sprint
 
 ## ✅ Fixed (move items here when done)
+- [x] Tool animations are slower (each swing hits harder, so chopping and mining take the same time) (Roblox)
+- [x] The cast lands exactly where the mouse points. The bar only times a PERFECT CAST now (Roblox)
+- [x] Tab opens the Bag (Roblox)
+- [x] Ctrl is sprint, with a Sprint button on touchscreens (Roblox)
 - [x] Fishing minigame art now looks like the old browser version (Roblox)
 - [x] Perfect cast: it was there, but invisible. The power bar now shows a gold PERFECT zone at the end (Roblox)
 - [x] Chopping is a two-handed sideways swing at a random angle (Roblox)
