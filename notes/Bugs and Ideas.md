@@ -18,6 +18,10 @@ Back to [[Home]]
 - [ ]  Fix: the fishing model(ie. the minigame art) could be the same as the old browser version of valley life.
 - [ ] Fix: Idk if im just mis timing it but i think the perfect cast was removed
 - [ ] Fix: The chopping animation should be 2 handed and a sideways swing, randomly selecting and angle to swing at
+- [ ] Fix: Things like old boots and seaweed shouldnt count as fish they should be in another category called junk
+- [ ] Fix: The shovel animation should bend the character down, scoop dirt and you should see it being flung away
+- [ ] Fix. The pickaxe animation should be 2 handed like the axe but over the shoulder and downward
+- [ ] Fix: Oxygen lasts to long
 - [ ]
 
 ## ✅ Fixed (move items here when done)
