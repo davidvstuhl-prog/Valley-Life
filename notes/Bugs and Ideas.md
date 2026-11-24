@@ -15,7 +15,7 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] 
+- [ ] fix: the animations are to fast
 - [ ]
 
 ## ✅ Fixed (move items here when done)
