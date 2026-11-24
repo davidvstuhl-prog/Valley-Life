@@ -15,10 +15,10 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] Fix:The axe animation should not only swing sideways but the axe should be parallel to the ground while swinging
 - [ ] 
 
 ## ✅ Fixed (move items here when done)
+- [x] The axe stays parallel to the ground while it swings sideways (each swing changes direction and height) (Roblox)
 - [x] Tool animations are slower (each swing hits harder, so chopping and mining take the same time) (Roblox)
 - [x] The cast lands exactly where the mouse points. The bar only times a PERFECT CAST now (Roblox)
 - [x] Tab opens the Bag (Roblox)
