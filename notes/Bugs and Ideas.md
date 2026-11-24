@@ -22,6 +22,7 @@ Back to [[Home]]
 - [ ] Fix: The shovel animation should bend the character down, scoop dirt and you should see it being flung away
 - [ ] Fix. The pickaxe animation should be 2 handed like the axe but over the shoulder and downward
 - [ ] Fix: Oxygen lasts to long
+- [ ] Fix: Each garden plot should be a raised 6x6 box with wood sides that look hoed in rows so they are clean and orderly
 - [ ]
 
 ## ✅ Fixed (move items here when done)
