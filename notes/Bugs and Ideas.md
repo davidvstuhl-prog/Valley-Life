@@ -18,10 +18,10 @@ Back to [[Home]]
 - [ ] 
 
 ## ✅ Fixed (move items here when done)
+- [x] Bag opens with I now (Tab is taken by Roblox's player list). The Fish Index moved to F (Roblox)
 - [x] The axe stays parallel to the ground while it swings sideways (each swing changes direction and height) (Roblox)
 - [x] Tool animations are slower (each swing hits harder, so chopping and mining take the same time) (Roblox)
 - [x] The cast lands exactly where the mouse points. The bar only times a PERFECT CAST now (Roblox)
-- [x] Tab opens the Bag (Roblox)
 - [x] Ctrl is sprint, with a Sprint button on touchscreens (Roblox)
 - [x] Fishing minigame art now looks like the old browser version (Roblox)
 - [x] Perfect cast: it was there, but invisible. The power bar now shows a gold PERFECT zone at the end (Roblox)
