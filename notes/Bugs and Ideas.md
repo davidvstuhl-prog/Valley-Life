@@ -16,7 +16,9 @@ Back to [[Home]]
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
 - [ ] fix: the animations are to fast
-- [ ]
+- [ ] Fix: The fishing pole aim spot should not move back and forth while casting. It should only be where the mouse is pointed
+- [ ] Fix: the bag button needs to change to tab
+- [ ] fix: Cntrl should be sprint
 
 ## ✅ Fixed (move items here when done)
 - [x] Fishing minigame art now looks like the old browser version (Roblox)
