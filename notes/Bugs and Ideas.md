@@ -11,11 +11,11 @@ Back to [[Home]]
 
 ## 🐛 Bugs
 - [ ] *(example)* When I ___, the ___ happens, but it should ___
-- [ ] 
+- [ ] Bug: When the doors open they dont look like there opening on hinges the just turn and then when they are closed it moves them over to the right
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] 
+- [ ] FIx: The trees look the same
 
 ## ✅ Fixed (move items here when done)
 - [x] Trees look real: tapered leaning trunks with roots and branches, leafy clusters at the branch tips. Pines droop, birches have bark marks, Ancient trees glow (Roblox)
