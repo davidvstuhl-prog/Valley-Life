@@ -15,6 +15,11 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
+- [ ] Design idea: The trees need to look more real and not just like blobs on sticls
+- [ ] Design idea: The buildings are way to close together
+- [ ] Design IDea: The buildings need more detail and depth. If neccessary make them larger and have a door that needs to be opened to get to the inside which should look nice
+- [ ] Design Idea: the npcs should be pretty, they shouldnt be just blocks
+- [ ] 
 
 ## ✅ Fixed (move items here when done)
 - [x] The axe blade faces the tree during the swing (the wrist turns the axe so the blade leads) (Roblox)
