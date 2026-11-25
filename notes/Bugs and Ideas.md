@@ -11,14 +11,14 @@ Back to [[Home]]
 
 ## 🐛 Bugs
 - [ ] *(example)* When I ___, the ___ happens, but it should ___
-- [ ] bug: The npcs still walk in the ground
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] Fix: market should be called shop and needs to be a building
-- [ ] fix: the resurant should be a building that is built starting as a campfire then resources are contributed to level it up to diff levels of finishedness
 
 ## ✅ Fixed (move items here when done)
+- [x] NPCs stand on the ground: their leg length is measured from their own joints, and walkers follow the real ground (Roblox)
+- [x] The Market is now the Shop: a building with a door, a shopkeeper behind the counter, shelves of goods, barrels and crates (Roblox)
+- [x] The restaurant starts as a Campfire Kitchen. Donate at its build board (E) to grow it: Cookout Stand, Diner Shack, then the Valley Diner building. More tables each stage, shared by everyone and saved (Roblox)
 - [x] Doors swing on their hinges (you can see the metal hinges now) and close back exactly where they started (Roblox)
 - [x] Every tree looks different: its own size, shade, lean and branch directions, plus shape styles (round, spreading or tall oaks and maples, skinny or full pines, birches in clumps) (Roblox)
 - [x] Trees look real: tapered leaning trunks with roots and branches, leafy clusters at the branch tips. Pines droop, birches have bark marks, Ancient trees glow (Roblox)
