@@ -15,7 +15,8 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] Fix: market should
+- [ ] Fix: market should be called shop and needs to be a building
+- [ ] fix: the resurant should be a building that is built starting as a campfire then resources are contributed to level it up to diff levels of finishedness
 
 ## ✅ Fixed (move items here when done)
 - [x] Doors swing on their hinges (you can see the metal hinges now) and close back exactly where they started (Roblox)
