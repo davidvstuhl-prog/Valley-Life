@@ -11,13 +11,13 @@ Back to [[Home]]
 
 ## 🐛 Bugs
 - [ ] *(example)* When I ___, the ___ happens, but it should ___
-- [ ] Bug: When the doors open they dont look like there opening on hinges the just turn and then when they are closed it moves them over to the right
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] FIx: The trees look the same
 
 ## ✅ Fixed (move items here when done)
+- [x] Doors swing on their hinges (you can see the metal hinges now) and close back exactly where they started (Roblox)
+- [x] Every tree looks different: its own size, shade, lean and branch directions, plus shape styles (round, spreading or tall oaks and maples, skinny or full pines, birches in clumps) (Roblox)
 - [x] Trees look real: tapered leaning trunks with roots and branches, leafy clusters at the branch tips. Pines droop, birches have bark marks, Ancient trees glow (Roblox)
 - [x] The town is spread out along Main Street (south of spawn): Home and Workshop on the east side, Market and Pet Hatchery on the west (Roblox)
 - [x] Buildings are bigger and detailed: windows with glass and flower boxes, roofs, chimneys, lanterns, a door you open with E, and cozy furnished insides (Roblox)
