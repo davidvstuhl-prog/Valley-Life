@@ -1,7 +1,7 @@
 ---
 tags: [valley-life, bugs, ideas]
 ---
-# Bugs and Ideas
+ # Bugs and Ideas
 
 Back to [[Home]]
 
