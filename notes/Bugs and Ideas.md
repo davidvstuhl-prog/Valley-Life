@@ -15,13 +15,13 @@ Back to [[Home]]
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
-- [ ] Design idea: The trees need to look more real and not just like blobs on sticls
-- [ ] Design idea: The buildings are way to close together
-- [ ] Design IDea: The buildings need more detail and depth. If neccessary make them larger and have a door that needs to be opened to get to the inside which should look nice
-- [ ] Design Idea: the npcs should be pretty, they shouldnt be just blocks
 - [ ] 
 
 ## ✅ Fixed (move items here when done)
+- [x] Trees look real: tapered leaning trunks with roots and branches, leafy clusters at the branch tips. Pines droop, birches have bark marks, Ancient trees glow (Roblox)
+- [x] The town is spread out along Main Street (south of spawn): Home and Workshop on the east side, Market and Pet Hatchery on the west (Roblox)
+- [x] Buildings are bigger and detailed: windows with glass and flower boxes, roofs, chimneys, lanterns, a door you open with E, and cozy furnished insides (Roblox)
+- [x] NPCs are real smooth characters with skin tones, hair, hats and clothes, and they swing their arms and legs when they walk (Roblox)
 - [x] The axe blade faces the tree during the swing (the wrist turns the axe so the blade leads) (Roblox)
 - [x] Bag opens with I now (Tab is taken by Roblox's player list). The Fish Index moved to F (Roblox)
 - [x] The axe stays parallel to the ground while it swings sideways (each swing changes direction and height) (Roblox)
