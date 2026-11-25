@@ -11,9 +11,11 @@ Back to [[Home]]
 
 ## 🐛 Bugs
 - [ ] *(example)* When I ___, the ___ happens, but it should ___
+- [ ] bug: The npcs still walk in the ground
 
 ## 💡 Ideas/Fixes
 - [ ] *(example)* Add a ___
+- [ ] Fix: market should
 
 ## ✅ Fixed (move items here when done)
 - [x] Doors swing on their hinges (you can see the metal hinges now) and close back exactly where they started (Roblox)
